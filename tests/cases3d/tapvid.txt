@@ -1,0 +1,8 @@
+# TAPVid-3D APD / OA / AJ: numpy, perfect tracks, a planted 0.05 error at depth 10 (passes 3 of 5 thresholds), a 1-1-1 confusion
+tp_rand       tapvid 1e-12 tp_gt,tp_gv,tp_pred,tp_pv focal=500
+tp_rand_m     tapvid 1e-12 tp_gt,tp_gv,tp_pred,tp_pv metric=1
+tpr_perfect    tapvid 1e-12 tp_gt,tp_gv,tp_gt,tp_gv expect:equals=tp_perfect
+tpr_z10        tapvid 1e-12 tp_z10,tp_one,tp_z10_off,tp_one focal=500 expect:equals=tp_z10_truth
+tp_confusion  tapvid 1e-12 tp_z10,tp_c_gv,tp_z10,tp_c_pv expect:equals=tp_c_truth
+tp_none       tapvid 0     tp_z10,tp_zero,tp_z10,tp_one expect:raises=1
+tp_shape      tapvid 0     tp_gt,tp_gv,tp_z10,tp_one expect:raises=1

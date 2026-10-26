@@ -1,0 +1,11 @@
+# B-spline / NURBS: Cox-de Boor + lstsq in numpy, Greville plane, exact rational quarter cylinder, fit recovers a planted net
+ns_eval       nurbs_eval 1e-10 ns_net  p=3 q=2 m=20 n=15
+ns_eval_w     nurbs_eval 1e-10 ns_netw p=3 q=2 m=20 n=15
+ns_eval_min   nurbs_eval 1e-10 ns_net  p=3 q=2 m=2 n=2
+ns_eval_plane nurbs_eval 1e-12 ns_plane p=3 q=2 m=9 n=7 expect:equals=ns_plane_truth
+ns_eval_cyl   nurbs_eval 1e-10 ns_cyl  p=2 q=1 m=11 n=3 expect:cyl=1
+ns_eval_bad   nurbs_eval 0 ns_net p=6 q=2 expect:raises=1
+ns_fit_exact  nurbs_fit 1e-8 ns_grid nu=6 nv=5 p=3 q=2 expect:equals=ns_net
+ns_fit_noisy  nurbs_fit 1e-9 ns_grid_noisy nu=5 nv=4 p=3 q=2
+ns_fit_lowdeg nurbs_fit 1e-9 ns_grid_noisy nu=4 nv=4 p=1 q=1
+ns_fit_few    nurbs_fit 0 ns_grid_small nu=6 nv=5 p=3 q=2 expect:raises=1

@@ -1,0 +1,10 @@
+# command-line misuse is rejected with a message, never silently accepted
+cli_badkey    voxelize 0 pts500 sise=1 expect:raises=1
+cli_noinput   voxelize 0 - expect:raises=1
+cli_toomany   umeyama 0 al_src,al_dst,al_src expect:raises=1
+cli_odiff3    odiff 0 scene64,scene64,scene64 expect:raises=1
+cli_nofaces   mesh 0 ms_one expect:raises=1
+cli_badnum    voxelize 0 pts500 size=abc expect:raises=1
+cli_wrongdt   voxelize 0 scene64 expect:raises=1
+cli_wrongcols voxelize 0 al_src,al_dst expect:raises=1
+cli_depth_oob odiff 0 scene64,scene64_add1 depth=4 expect:raises=1

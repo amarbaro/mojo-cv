@@ -1,0 +1,21 @@
+# GLB: our writer checked by an independent numpy parser/validator and read back; our reader fed numpy-written layout variants and corrupt files
+glb_one       glb 0 mesh_one.v,mesh_one.f
+glb_cube3     glb 0 mesh_cube3.v,mesh_cube3.f
+glb_color     glb 0 mesh_blob.v,mesh_blob.f expect:colors=1
+glb_pinch     glb 0 mesh_pinch.v,mesh_pinch.f expect:colors=1
+glr_u32       glb_read 0 - expect:variant=u32
+glr_u16       glb_read 0 - expect:variant=u16
+glr_u8        glb_read 0 - expect:variant=u8
+glr_stride    glb_read 0 - expect:variant=stride
+glr_noindex   glb_read 0 - expect:variant=noindex
+glr_all       glb_read 0 - expect:variant=all
+glr_badmagic  glb_read 0 - expect:variant=bad_magic expect:raises=1
+glr_trunc     glb_read 0 - expect:variant=truncated expect:raises=1
+glr_badlen    glb_read 0 - expect:variant=badlen expect:raises=1
+glr_jsonbad   glb_read 0 - expect:variant=json_bad expect:raises=1
+glr_empty     glb_read 0 - expect:variant=empty expect:raises=1
+glr_idxoob    glb_read 0 - expect:variant=idx_oob expect:raises=1
+glr_accoob    glb_read 0 - expect:variant=acc_oob expect:raises=1
+glr_normcount glb_read 0 - expect:variant=norm_count expect:raises=1
+glr_lines     glb_read 0 - expect:variant=lines expect:raises=1
+glr_nopos     glb_read 0 - expect:variant=no_pos expect:raises=1

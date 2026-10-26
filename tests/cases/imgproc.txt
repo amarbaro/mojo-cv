@@ -1,0 +1,158 @@
+# imgproc: one scene row (hd/sm, synthetic scenes) and one edge case per op
+gauss5_hd        GaussianBlur hd ksize=5 sigma=0 => max:1
+gauss_s2_hdg      GaussianBlur hdg ksize=0 sigma=2.0 => max:2
+gauss5_odd       GaussianBlur odd ksize=5 sigma=0 => exact
+gauss5_smg       GaussianBlur smg ksize=5 sigma=0 => exact
+gauss5_sm        GaussianBlur sm ksize=5 sigma=0 => exact
+gauss7_odd       GaussianBlur odd ksize=7 sigma=0 => max:1
+gauss_f32        GaussianBlur f32 ksize=5 sigma=1.2 => max:0.01
+gauss3_one       GaussianBlur one ksize=3 sigma=0 => max:1
+pyrdown_hd       pyrDown hd => exact
+pyrdown_smg      pyrDown smg => exact
+pyrdown_sm       pyrDown sm => exact
+pyrdown_hdg      pyrDown hdg => exact
+pyrdown_odd      pyrDown odd => exact
+pyrdown_one      pyrDown one => exact
+pyrdown_f32      pyrDown f32 => max:0.01
+sobel_dx_hdg     Sobel hdg dx=1 dy=0 ksize=3 => exact
+sobel_dy5_hd     Sobel hd dx=0 dy=1 ksize=5 => exact
+sobel_scharr_g1  Sobel g1 dx=1 dy=0 ksize=-1 => exact
+sobel_f32_dxx    Sobel f32 dx=2 dy=0 ksize=3 => max:0.05
+thresh_bin_hdg   threshold hdg thresh=100 maxval=255 type=0 => exact, exact
+thresh_inv_sm    threshold smg thresh=127.6 maxval=200 type=1 => exact, exact
+thresh_trunc_g1  threshold g1 thresh=90 type=2 => exact, exact
+thresh_tozero_g1 threshold g1 thresh=90 type=3 => exact, exact
+thresh_tozinv_hd threshold hd thresh=40 type=4 => exact, exact
+thresh_otsu_hdg  threshold hdg thresh=0 maxval=255 type=0 otsu=1 => exact, exact
+thresh_otsu_one  threshold g2 thresh=0 maxval=255 type=0 otsu=1 => exact, exact
+thresh_tri_hdg    threshold hdg thresh=0 maxval=255 type=0 tri=1 => exact, exact
+thresh_tri_bin    threshold bin thresh=0 maxval=255 type=1 tri=1 => exact, exact
+thresh_tri_blank  threshold blank thresh=0 maxval=255 type=0 tri=1 => exact, exact
+thresh_tri_g2     threshold g2 thresh=0 maxval=255 type=2 tri=1 => exact, exact
+thresh_f32       threshold f32 thresh=10.5 maxval=7 type=0 => exact, exact
+integral_hdg     integral hdg => exact
+integral_hd      integral hd => exact
+integral_odd     integral odd => exact
+integral_f32     integral f32 => max:0.001
+integral_one     integral one => exact
+erode_hdg        erode hdg ksize=3 => exact
+erode_hd5        erode hd ksize=5 iters=2 => exact
+dilate_cross_sm  dilate sm ksize=7 shape=1 => exact
+dilate_ell_smg   dilate smg ksize=9 shape=2 => exact
+erode_ell_odd    erode odd ksize=5 shape=2 => exact
+dilate_one       dilate one ksize=3 => exact
+erode_f32        erode f32 ksize=3 => exact
+cvt_gray_hd      cvtColor hd code=bgr2gray => exact
+cvt_rgb2gray_odd cvtColor odd code=rgb2gray => exact
+cvt_gray2bgr_g1  cvtColor g1 code=gray2bgr => exact
+cvt_swap_hd      cvtColor hd code=bgr2rgb => exact
+cvt_hsv_hd       cvtColor hd code=bgr2hsv => exact
+cvt_hsv_odd      cvtColor odd code=bgr2hsv => exact
+cvt_hsv_one      cvtColor one code=bgr2hsv => exact
+cvt_hsv2bgr_odd  cvtColor odd code=hsv2bgr => max:1
+cvt_ycrcb_hd     cvtColor hd code=bgr2ycrcb => max:1
+cvt_ycrcb2bgr_sm cvtColor sm code=ycrcb2bgr => max:1
+cvt_gray_f32     cvtColor f32 code=bgr2gray => max:0.01
+cvt_lab_hd       cvtColor hd code=bgr2lab => max:2
+cvt_lab_one      cvtColor one code=bgr2lab => max:1
+cvt_lab_f32      cvtColor f32 code=bgr2lab => max:0.01
+cvt_lab2bgr_sm   cvtColor sm_lab code=lab2bgr => max:2
+cvt_lab2bgr_one  cvtColor one code=lab2bgr => max:2
+cvt_luv_hd       cvtColor hd code=bgr2luv => max:1
+cvt_luv_odd      cvtColor odd code=bgr2luv => max:1
+cvt_luv_f32      cvtColor f32 code=bgr2luv => max:0.01
+cvt_luv2bgr_sm   cvtColor sm_luv code=luv2bgr => max:2
+cvt_luv2bgr_f32  cvtColor sm_luv_f code=luv2bgr => frac:0.001:0.9999
+cvt_lab2bgr_f32  cvtColor sm_lab_f code=lab2bgr => max:0.001
+resize_down_lin_hd resize hd w=960 h=540 interp=1 => max:1
+resize_up_lin_sm   resize sm w=913 h=401 interp=1 => max:1
+resize_nn_hd       resize hd w=640 h=360 interp=0 => exact
+resize_nn_odd      resize odd w=29 h=17 interp=0 => exact
+resize_cub_sm      resize sm w=700 h=333 interp=2 => max:2
+resize_cub_hdg     resize hdg w=800 h=450 interp=2 => max:2
+resize_lan_sm      resize sm w=300 h=151 interp=3 => max:2
+resize_lan_hdg     resize hdg w=2500 h=1300 interp=3 => max:2
+resize_lin_one     resize one w=5 h=3 interp=1 => max:1
+resize_lin_f32     resize f32 w=40 h=20 interp=1 => max:0.01
+resize_half_g       resize smg w=240 h=135 interp=1 => max:1
+resize_half_c       resize sm w=240 h=135 interp=1 => max:1
+resize_area_hd     resize hd w=640 h=360 interp=4 => max:1
+resize_area_frac   resize hd w=777 h=431 interp=4 => max:1
+resize_area_up2    resize sm w=960 h=540 interp=4 => exact
+resize_area_shrinkx resize sm w=100 h=270 interp=4 => max:1
+resize_area_up     resize sm w=913 h=401 interp=4 => max:1
+resize_area_odd    resize odd w=5 h=3 interp=4 => max:1
+resize_area_one    resize one w=1 h=1 interp=4 => max:1
+resize_area_f32    resize f32 w=17 h=9 interp=4 => max:0.01
+warp_rot_hd        warpAffine hd M=0.9396926,-0.3420201,300.5,0.3420201,0.9396926,-200.25 interp=1 => max:1
+warp_rot_hdg        warpAffine hdg M=0.9396926,-0.3420201,300.5,0.3420201,0.9396926,-200.25 interp=1 => max:1
+warp_rot_sm        warpAffine sm M=0.9396926,-0.3420201,300.5,0.3420201,0.9396926,-200.25 interp=1 => max:1
+warp_nn_sm         warpAffine sm M=1.3,0.1,-20,-0.2,0.8,15 interp=0 => exact
+warp_cub_smg       warpAffine smg M=0.7,-0.5,200,0.5,0.7,-60 interp=2 => max:1
+warp_rep_odd       warpAffine odd M=1,0.2,2,-0.1,1.1,-1 interp=1 border=1 => max:1
+warp_inv_g1        warpAffine g1 M=0.9,0.2,1.5,-0.2,0.9,0.5 interp=1 inv=1 w=12 h=7 bval=77 => max:1
+warp_f32           warpAffine f32 M=0.9,0.2,1.5,-0.2,0.9,0.5 interp=1 => max:0.5
+remap_lin_hd       remap hd mapx mapy interp=1 => max:1
+remap_lin_hdg       remap hdg mapx mapy interp=1 => max:1
+remap_lin_sm       remap sm mapx mapy interp=1 => max:1
+remap_nn_sm        remap sm mapxs mapys interp=0 => exact
+remap_cub_smg      remap smg mapxs mapys interp=2 => max:1
+remap_odd_const    remap odd mapxo mapyo interp=1 bval=9 => max:1
+remap_odd_refl     remap odd mapxo mapyo interp=1 border=0 => max:1
+blob_sm            blobFromImage sm w=224 h=224 scale=0.017 mean=104,117,123 swap=1 => max:0.02
+blob_hd            blobFromImage hd w=320 h=180 scale=1 mean=0,0,0 => max:1
+ccl8_bin         connectedComponentsWithStats bin connectivity=8 => exact, exact, max:1e-9
+ccl4_binhd       connectedComponentsWithStats binhd connectivity=4 => exact, exact, max:1e-9
+ccl8_shapes      connectedComponentsWithStats shapes connectivity=8 => exact, exact, max:1e-9
+ccl_blank        connectedComponentsWithStats blank connectivity=8 => exact, exact, max:1e-9
+canny_hdg        Canny hdg t1=50 t2=150 aperture=3 => exact
+canny_smg_l2     Canny smg t1=80 t2=200 aperture=3 l2=1 => exact
+canny_sm5        Canny smg t1=40 t2=120 aperture=5 => exact
+canny_blank      Canny blank t1=10 t2=20 => exact
+canny_g1         Canny g1 t1=30 t2=60 => exact
+contours_ext_shapes findContours shapes mode=0 method=0 => exact, exact, exact
+contours_list_shapes findContours shapes mode=1 method=0 => exact, exact, exact
+contours_simple_shapes findContours shapes mode=1 method=1 => exact, exact, exact
+contours_ext_bin findContours bin mode=0 method=1 => exact, exact, exact
+contours_list_bin findContours bin mode=1 method=0 => exact, exact, exact
+contours_blank   findContours blank mode=1 method=0 => exact, exact, exact
+contours_full    findContours full mode=0 method=0 => exact, exact, exact
+contours_ccomp_shapes findContours shapes mode=2 method=0 => exact, exact, exact
+contours_tree_shapes  findContours shapes mode=3 method=0 => exact, exact, exact
+contours_tree_simple  findContours shapes mode=3 method=1 => exact, exact, exact
+contours_ccomp_bin    findContours bin mode=2 method=1 => exact, exact, exact
+contours_tree_bin     findContours bin mode=3 method=0 => exact, exact, exact
+contours_tree_binhd   findContours binhd mode=3 method=1 => exact, exact, exact
+contours_tree_blank   findContours blank mode=3 method=0 => exact, exact, exact
+contours_tree_full    findContours full mode=3 method=0 => exact, exact, exact
+gftt_hdg         goodFeaturesToTrack hdg maxCorners=500 quality=0.01 minDist=8 block=3 => pts:0.5:0.95
+gftt_smg         goodFeaturesToTrack smg maxCorners=100 quality=0.05 minDist=5 block=5 => pts:0.5:0.98
+gftt_blank       goodFeaturesToTrack blank maxCorners=10 quality=0.1 minDist=3 => cnt:0
+gftt_harris_hdg  goodFeaturesToTrack hdg maxCorners=300 quality=0.01 minDist=8 block=3 harris=1 k=0.04 => pts:0.5:0.95
+gftt_harris_smg  goodFeaturesToTrack smg maxCorners=80 quality=0.02 minDist=5 block=5 harris=1 k=0.06 => pts:0.5:0.98
+gftt_harris_blank goodFeaturesToTrack blank maxCorners=10 quality=0.1 minDist=3 harris=1 => cnt:0
+line_diag_hd     line hd x1=10 y1=20 x2=1800 y2=900 color=0,255,0 => exact
+line_steep_g1    line g1 x1=2 y1=0 x2=5 y2=4 color=200 => exact
+line_clip_sm     line sm x1=-50 y1=-30 x2=700 y2=400 color=255,0,0 => exact
+line_out_sm      line sm x1=-50 y1=-30 x2=-10 y2=400 color=255,0,0 => exact
+line_thick_hd    line hd x1=10 y1=20 x2=1800 y2=900 color=0,255,0 thick=7 => exact
+line_thick_g1    line g1 x1=2 y1=0 x2=5 y2=4 color=200 thick=3 => exact
+line_thick_flat  line sm x1=30 y1=100 x2=400 y2=100 color=255,0,0 thick=4 => exact
+line_thick_dot   line sm x1=50 y1=50 x2=50 y2=50 color=255,0,0 thick=9 => exact
+line_thick_clip  line sm x1=-40 y1=-30 x2=500 y2=300 color=0,0,255 thick=6 => frac:0:0.995
+rect_thick_sm    rectangle sm x1=40 y1=30 x2=300 y2=200 color=0,255,255 thick=5 => exact
+line_hor_odd     line odd x1=12 y1=3 x2=0 y2=3 color=1,2,3 => exact
+rect_edge_sm     rectangle sm x1=10 y1=20 x2=300 y2=200 color=0,0,255 thick=1 => exact
+rect_fill_odd    rectangle odd x1=-3 y1=2 x2=8 y2=9 color=9,8,7 thick=-1 => exact
+hog_scores_smg   HOGScores smg hog_svm => max:0.01
+hog_scores_hdg   HOGScores hdg hog_svm => max:0.01
+hog_raw_smg      detectMultiScale smg hog_svm hit=-1.5 group=0 => pts:1:0.99
+hog_raw_hdg      detectMultiScale hdg hog_svm hit=-1.0 group=0 => pts:1:0.99
+hog_group_smg    detectMultiScale smg hog_svm hit=-2.0 group=2 => pts:2:0.99
+hog_group_smg2   detectMultiScale smg2 hog_svm hit=-2.2 group=2 => pts:2:0.99
+hog_group_hdg    detectMultiScale hdg hog_svm hit=-0.6 group=2 => pts:2:0.99
+hog_none         detectMultiScale smg hog_svm hit=1.0 group=2 => cnt:0
+group_rects_hdg  groupRectangles hog_raw thresh=2 => pts:0.5:1.0
+grabcut_scene    grabCut gc_scene rect=25,12,100,86 iters=3 => iou:0.95
+grabcut_shot     grabCut gc_shot rect=35,20,90,72 iters=3 => iou:0.85
+grabcut_tiny     grabCut odd rect=2,1,9,5 iters=1 => iou:0.6

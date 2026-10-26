@@ -1,0 +1,2 @@
+resize_13_lin_hd resize hd w=1280 h=720 interp=1 => max:1
+resize_07_lin_hd resize hd w=1344 h=756 interp=1 => max:1

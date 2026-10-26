@@ -1,0 +1,10 @@
+# Umeyama: closed form (recovers the planted s, R, t) and the numpy SVD oracle
+um_exact      umeyama 1e-9 al_src,al_dst                expect:equals=al_truth
+um_noisy      umeyama 1e-9 al_src,al_dst_noisy
+um_rigid      umeyama 1e-9 al_src,al_dst_noisy scale=0
+um_plane      umeyama 1e-9 al_plane,al_plane_dst        expect:equals=al_plane_truth
+um_mirror     umeyama 1e-9 al_src,al_mirror_dst
+um_three      umeyama 1e-9 al_few,al_few_dst
+um_line       umeyama 0    al_line,al_line              expect:raises=1
+um_one        umeyama 0    al_one,al_one                expect:raises=1
+um_mismatch   umeyama 0    al_src,al_few_dst            expect:raises=1

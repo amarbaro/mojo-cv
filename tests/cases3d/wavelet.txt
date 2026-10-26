@@ -1,0 +1,14 @@
+# 3D Haar: numpy transform, closed-form constant volume, perfect reconstruction, Parseval on the dropped energy
+haar_f_rand8  haar3f 1e-12 wv_rand8
+haar_f_lv1    haar3f 1e-12 wv_rand8 levels=1
+haar_f_blob   haar3f 1e-12 wv_blob32
+haar_f_const  haar3f 1e-12 wv_const16 expect:equals=wv_const_coef
+haar_f_n2     haar3f 1e-12 wv_n2
+haar_i_rt     haar3i 1e-12 haar_f_blob expect:equals=wv_blob32
+haar_i_lv1    haar3i 1e-12 haar_f_lv1 levels=1 expect:equals=wv_rand8
+haar_c_0      haar3c 1e-12 wv_blob32 thr=0 expect:equals=wv_blob32
+haar_c_thr    haar3c 1e-12 wv_blob32 thr=0.05 expect:kept_frac_lt=0.2
+haar_c_all    haar3c 1e-12 wv_rand8 thr=1000
+haar_bad6     haar3f 0 wv_bad6 expect:raises=1
+haar_lvbig    haar3f 0 wv_rand8 levels=4 expect:raises=1
+haar_neglv    haar3f 0 wv_rand8 levels=-1 expect:raises=1

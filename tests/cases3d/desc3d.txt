@@ -1,0 +1,12 @@
+# binary descriptors: numpy brute force, rotation/translation/scale invariance, planted-noise matching
+ds_desc       describe 0 ds_pts k=16
+ds_desc_k8    describe 0 ds_pts k=8
+ds_moved      describe 0 ds_pts_moved k=16 expect:equals=ds_desc
+ds_mirror     describe 0 ds_pts_mirror k=16 expect:equals=ds_desc_not
+ds_fewpts describe 0 ds_few k=16 expect:raises=1
+ds_match_self match    0 ds_desc,ds_desc expect:equals=ds_ident
+ds_match_mov  match    0 ds_desc,ds_moved expect:equals=ds_ident
+ds_match_nz   match    0 ds_desc,ds_noisy
+ds_match_tru  match    0 ds_desc,ds_noisy expect:equals=ds_noisy_truth
+ds_match_one  match    0 ds_desc,ds_one
+ds_match_none match    0 ds_desc,ds_empty expect:raises=1

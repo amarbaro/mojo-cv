@@ -1,0 +1,57 @@
+# calib3d: camera model and geometry, float64 arrays
+rod_vec          Rodrigues rod_v => max:1e-12
+rod_zero         Rodrigues rod_v0 => max:1e-12
+rod_mat          Rodrigues rod_m => max:1e-9
+rod_mat_pi       Rodrigues rod_mpi => max:1e-6
+rod_mat_id       Rodrigues rod_mid => max:1e-12
+proj_d4          projectPoints obj3 rv tv K d4 => max:1e-9
+proj_d5          projectPoints obj3 rv tv K d5 => max:1e-9
+proj_d8          projectPoints obj3 rv0 tv K d8 => max:1e-9
+proj_d12         projectPoints obj3 rv tv K d12 => max:1e-9
+proj_nodist      projectPoints obj3 rv tv K dz => max:1e-9
+fproj            fisheye_projectPoints obj3 rv tv K dfe => max:1e-9
+undist_d4        undistortPoints pix K d4 => max:1e-9
+undist_d8        undistortPoints pix K d8 => max:1e-9
+undist_rp        undistortPoints pix K d5 Rr Pn => max:1e-9
+undist_zero      undistortPoints pix K dz => max:1e-12
+fundist          fisheye_undistortPoints pix K dfe => max:1e-9
+fundist_rp       fisheye_undistortPoints pix K dfe Rr Pn => max:1e-9
+rectmap_d5       initUndistortRectifyMap K d5 Rr Pn w=640 h=480 => max:0.001, max:0.001
+rectmap_id       initUndistortRectifyMap K dz Rr K w=64 h=48 => max:0.001, max:0.001
+frectmap         fisheye_initUndistortRectifyMap K dfe Rr Pn w=320 h=240 => max:0.001, max:0.001
+aff_ransac       estimateAffine2D aff_from aff_to thresh=3 => max:1e-4, exact
+aff_tight        estimateAffine2D aff_from aff_to thresh=1 maxIters=500 conf=0.999 => max:1e-4, exact
+pnp_d4           solvePnP pnp_obj pnp_img K d4 => max:1e-6, max:1e-6
+pnp_planar       solvePnP pnp_obj_pl pnp_img_pl K d4 => max:1e-6, max:1e-6
+pnp_nodist       solvePnP pnp_obj pnp_img K dz => max:0.05, max:0.05
+pnp_ransac       solvePnPRansac pnp_obj pnp_img_out K d4 thresh=2 => max:1e-6, max:1e-6, exact
+ess_ransac       findEssentialMat ess_p1 ess_p2 K thresh=1 => max:2e-3, exact
+rect_zero        stereoRectify K dz K2 dz Rst Tst w=640 h=480 => max:1e-9, max:1e-9, max:1e-3, max:1e-3, max:1e-3
+rect_dist        stereoRectify K dst1 K2 dst2 Rst Tst w=640 h=480 => max:1e-9, max:1e-9, max:1e-3, max:1e-3, max:1e-3
+rect_nozd        stereoRectify K dst1 K2 dst2 Rst Tst w=640 h=480 zero=0 => max:1e-9, max:1e-9, max:1e-3, max:1e-3, max:1e-3
+ess_noisy        findEssentialMat ess_p1 ess_p2n K thresh=1.5 => max:0.15, frac:0:0.85
+pose_masked      recoverPose pose_E ess_p1 ess_p2 K pose_mask => max:1e-9, max:1e-9, exact
+pose_all         recoverPose pose_E ess_p1 ess_p2n K => max:1e-9, max:1e-9, frac:12:0.8
+sgbm_dots        StereoSGBM st_l st_r minDisp=0 numDisp=32 block=5 => frac:16:0.9
+sgbm_block3      StereoSGBM st_l st_r minDisp=0 numDisp=32 block=3 lrMax=1 uniq=10 => frac:16:0.9
+sgbm_mind        StereoSGBM st_l st_r minDisp=2 numDisp=16 block=5 => frac:16:0.9
+chess_a          findChessboardCorners cb_a cols=9 rows=6 => pts:0.5:0.95
+chess_b_rot      findChessboardCorners cb_b cols=7 rows=5 => pts:0.5:0.95
+chess_c          findChessboardCorners cb_c cols=6 rows=4 => pts:1.0:0.95
+chess_none       findChessboardCorners st_l cols=9 rows=6 => cnt:0
+aruco_four       aruco_detect aruco_a => exact, max:1.5
+aruco_persp      aruco_detect aruco_b => exact, max:1.5
+aruco_none       aruco_detect st_l => exact, exact
+fproj_zero_rot   fisheye_projectPoints obj3 rv0 tv K dfe => max:1e-9
+frectmap_small   fisheye_initUndistortRectifyMap K dfe Rr K w=32 h=24 => max:0.001, max:0.001
+pnp_ransac_pl    solvePnPRansac pnp_obj_pl2 pnp_img_pl_out K d4 thresh=2 => max:1e-5, max:1e-5, exact
+pnp_epnp_four    solvePnP pnp_four pnp_four_img K d4 epnp=1 => max:1e-6, max:1e-6
+pnp_epnp_noise   solvePnP pnp_obj pnp_img_noise K d4 => max:1e-6, max:1e-6
+ess_five_minimal findEssentialMat ess_six1 ess_six2 K thresh=0.01 => max:1e-5, exact
+ess_five_clean   findEssentialMat ess_clean1 ess_clean2 K thresh=0.01 => max:1e-6, exact
+# Exactly five matches: ten algebraic roots, six real essential matrices, four complex roots excluded.
+ess_five_roots   findEssentialMat ess_five1 ess_five2 K thresh=0.01 => max:1e-6, exact
+rect_alpha0      stereoRectify K dst1 K2 dst2 Rst Tst w=640 h=480 alpha=0 => max:1e-9, max:1e-9, max:1e-3, max:1e-3, max:1e-3
+rect_alpha1      stereoRectify K dst1 K2 dst2 Rst Tst w=640 h=480 alpha=1 => max:1e-9, max:1e-9, max:1e-3, max:1e-3, max:1e-3
+rect_vertical    stereoRectify K dst1 K2 dst2 Rst Tstv w=640 h=480 zero=0 => max:1e-9, max:1e-9, max:1e-3, max:1e-3, max:1e-3
+rect_vertical_a  stereoRectify K dst1 K2 dst2 Rst Tstv w=640 h=480 zero=0 alpha=0.5 => max:1e-9, max:1e-9, max:1e-3, max:1e-3, max:1e-3

@@ -1,0 +1,9 @@
+# features: binary descriptor matching and ORB
+bf_ab            bfmatch desc_a desc_b => exact
+bf_one           bfmatch desc_one desc_b => exact
+bf_self          bfmatch desc_a desc_a => exact
+knn_ab           knnmatch desc_a desc_b ratio=0.75 => exact, exact
+knn_ratio_tight  knnmatch desc_a desc_b ratio=0.4 => exact, exact
+orb_sm           ORB smg nfeatures=200 => orb:1.0:0.95:2
+orb_hd           ORB hdg nfeatures=500 => orb:1.0:0.95:2
+orb_blank        ORB blank => orb:1.0:0.95:2

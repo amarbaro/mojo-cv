@@ -1,0 +1,11 @@
+# phase correlation: planted integer rolls (composite, mixed and prime sizes), exact fractional Fourier shifts, numpy oracle
+pcr_int       phasecorr 1e-9 pc_a,pc_b           expect:equals=pc_t
+pcr_odd       phasecorr 1e-9 pc_aodd,pc_bodd     expect:equals=pc_todd
+pcr_prime     phasecorr 1e-9 pc_aprime,pc_bprime expect:equals=pc_tprime
+pcr_frac      phasecorr 1e-7 pc_af,pc_bf         expect:equals=pc_tf expect:cols=2
+pcr_frac2     phasecorr 1e-7 pc_af,pc_bf2        expect:equals=pc_tf2 expect:cols=2
+pcr_np        phasecorr 1e-9 pc_a,pc_b
+pcr_noise     phasecorr 1e-9 pc_af,pc_bnoise
+pcr_win       phasecorr 1e-9 pc_af,pc_bnoise window=1
+pcr_zero      phasecorr 1e-12 pc_zero,pc_zero    expect:equals=pc_zt
+pcr_mismatch  phasecorr 0 pc_a,pc_aodd           expect:raises=1

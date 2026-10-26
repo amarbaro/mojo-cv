@@ -1,0 +1,15 @@
+AGENTS.md
+.bin/
+briefs/
+.claude/
+CLAUDE.md
+exchange/
+.lane-prep
+.mailmap
+*.pyc
+__pycache__/
+tests/fixtures/.made
+tests/fixtures/*.mcv
+tests/real/
+.venv*
+.work/

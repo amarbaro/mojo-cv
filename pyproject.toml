@@ -1,0 +1,20 @@
+[project]
+name = "mojo-cv"
+version = "0.1.0"
+description = "Computer vision for Mojo: OpenCV-style 2D ops, calibration, 3D geometry and CAD export, each checked against cv2 5.0 or an exact oracle"
+license = "Apache-2.0"
+requires-python = ">=3.11,<3.15"
+dependencies = [
+    "mojo==1.2.0.dev2026102105",
+    "max==26.7.0.dev2026102105",
+    "numpy>=2.0",
+    "opencv-python-headless>=5.0,<5.1",
+]
+
+[tool.uv]
+prerelease = "allow"
+index-strategy = "unsafe-best-match"
+
+[[tool.uv.index]]
+name = "modular-nightly"
+url = "https://whl.modular.com/nightly/simple/"

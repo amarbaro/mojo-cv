@@ -1,0 +1,13 @@
+# CAE: eigvalsh oracle, closed-form stress states (uniaxial, pure shear, hydrostatic, biaxial, plane stress), colormap stops
+caer_rand       stress   1e-8  cae_rand
+caer_special    stress   1e-10 cae_special expect:equals=cae_special_truth
+caer_special_np stress  1e-10 cae_special
+caer_near       stress   1e-6  cae_near
+caer_empty      stress   exact cae_empty
+caer_badshape  stress   0     cae_bad expect:raises=1
+cmr_auto        colormap 1e-12 cm_vals
+cmr_range       colormap 1e-12 cm_vals lo=-20 hi=40
+cmr_stops       colormap 1e-12 cm_stops lo=0 hi=1 expect:equals=cm_stops_truth
+cmr_clamp       colormap 1e-12 cm_vals lo=0 hi=1
+cmr_flat        colormap 0     cm_flat expect:raises=1
+cmr_badrange    colormap 0     cm_vals lo=5 hi=1 expect:raises=1

@@ -1,0 +1,17 @@
+# real-world checks
+chess_real_0     findChessboardCorners tests/real/chess_0.mcv cols=11 rows=7 => max:2
+chess_real_1     findChessboardCorners tests/real/chess_1.mcv cols=11 rows=7 => max:2
+chess_real_2     findChessboardCorners tests/real/chess_2.mcv cols=11 rows=7 => max:2
+chess_real_3     findChessboardCorners tests/real/chess_3.mcv cols=11 rows=7 => max:2
+chess_real_4     findChessboardCorners tests/real/chess_4.mcv cols=11 rows=7 => max:2
+aruco_real_0     aruco_detect tests/real/aruco_0.mcv => exact, max:2
+aruco_real_1     aruco_detect tests/real/aruco_1.mcv => exact, max:2
+aruco_real_2     aruco_detect tests/real/aruco_2.mcv => exact, max:2
+aruco_real_3     aruco_detect tests/real/aruco_3.mcv => exact, max:2
+aruco_real_4     aruco_detect tests/real/aruco_4.mcv => exact, max:2
+pnp_real_0     solvePnP tests/real/pnp_obj_0.mcv tests/real/pnp_img_0.mcv tests/real/pnp_K_0.mcv tests/real/pnp_d_0.mcv => max:1e-4, max:1e-4
+pnp_real_1     solvePnP tests/real/pnp_obj_1.mcv tests/real/pnp_img_1.mcv tests/real/pnp_K_1.mcv tests/real/pnp_d_1.mcv => max:1e-4, max:1e-4
+pnp_real_2     solvePnP tests/real/pnp_obj_2.mcv tests/real/pnp_img_2.mcv tests/real/pnp_K_2.mcv tests/real/pnp_d_2.mcv => max:1e-4, max:1e-4
+pnp_real_3     solvePnP tests/real/pnp_obj_3.mcv tests/real/pnp_img_3.mcv tests/real/pnp_K_3.mcv tests/real/pnp_d_3.mcv => max:1e-4, max:1e-4
+pnp_real_4     solvePnP tests/real/pnp_obj_4.mcv tests/real/pnp_img_4.mcv tests/real/pnp_K_4.mcv tests/real/pnp_d_4.mcv => max:1e-4, max:1e-4
+orb_real_0       ORB tests/real/frame0.mcv nfeatures=500 => orb:1.0:0.95:2

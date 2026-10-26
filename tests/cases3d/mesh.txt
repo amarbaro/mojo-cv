@@ -1,0 +1,14 @@
+# voxel boundary to mesh: watertight, outward (signed volume = cell count), area = boundary quads, Euler, welded counts
+mesh_one     mesh 0 ms_one    expect:V=8  expect:chi=2
+mesh_cube3   mesh 0 ms_cube3  expect:V=56 expect:chi=2
+mesh_bar     mesh 0 ms_bar    expect:chi=2
+mesh_ring    mesh 0 ms_ring   expect:chi=0
+mesh_shell   mesh 0 ms_shell  expect:chi=4
+mesh_two     mesh 0 ms_two    expect:V=16 expect:chi=4
+mesh_edge    mesh 0 ms_edge   expect:V=16 expect:chi=4
+mesh_corner  mesh 0 ms_corner expect:V=16 expect:chi=4
+mesh_L       mesh 0 ms_L      expect:chi=2
+mesh_blob    mesh 0 ms_blob
+mesh_neg     mesh 0 ms_neg    expect:chi=2
+mesh_none    mesh 0 cells_empty
+mesh_pinch    mesh 0 ms_pinch

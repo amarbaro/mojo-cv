@@ -1,0 +1,21 @@
+# STEP AP242: our writer checked by an independent Part 21 parser (closed oriented shell, reals, references), the surface
+# knots/weights expanded from multiplicities, round trips through our reader, a tolerant and a strict reader
+stp_one       step 0 mesh_one.v,mesh_one.f
+stp_cube3     step 0 mesh_cube3.v,mesh_cube3.f
+stp_blob      step 0 mesh_blob.v,mesh_blob.f
+stp_ring      step 0 mesh_ring.v,mesh_ring.f
+stp_surf      step_surface 0 ns_net p=3 q=2
+stp_surf_rat  step_surface 0 ns_netw p=3 q=2
+stp_surf_cyl  step_surface 0 ns_cyl p=2 q=1
+str_pretty    step_read 0 - expect:variant=pretty
+str_lenient   step_read 0 - expect:variant=unknown_lenient
+str_unknown   step_read 0 - expect:variant=unknown_entity expect:raises=1
+str_dangling  step_read 0 - expect:variant=dangling expect:raises=1
+str_noend     step_read 0 - expect:variant=no_end expect:raises=1
+str_trunc     step_read 0 - expect:variant=truncated expect:raises=1
+str_dupid     step_read 0 - expect:variant=dup_id expect:raises=1
+str_openstr   step_read 0 - expect:variant=open_string expect:raises=1
+str_badchar   step_read 0 - expect:variant=bad_char expect:raises=1
+str_quad      step_read 0 - expect:variant=quad expect:raises=1
+str_empty     step_read 0 - expect:variant=empty expect:raises=1
+str_nogeom    step_read 0 - expect:variant=no_geometry expect:raises=1

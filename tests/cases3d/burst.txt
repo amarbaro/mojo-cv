@@ -1,0 +1,10 @@
+# burst super-resolution: known half-pixel shifts rebuild the fine image exactly (interior), numpy oracle, estimated shifts
+bst_exact     burst 1e-9 bs_f0,bs_f1,bs_f2,bs_f3,bs_shifts shifts=1 scale=2 expect:equals=bs_hr expect:crop=2
+bst_np        burst 1e-9 bs_f0,bs_f1,bs_f2,bs_f3,bs_shifts shifts=1 scale=2
+bst_planted   burst 1e-9 bs_r0,bs_r1,bs_r2,bs_r3,bs_shifts shifts=1 scale=2
+bst_reg       burst 1e-6 bs_r0,bs_r1,bs_r2,bs_r3 scale=2 expect:equals=bst_planted
+bst_reg_np    burst 1e-9 bs_r0,bs_r1,bs_r2,bs_r3 scale=3
+bst_noisy     burst 1e-9 bs_r0,bs_rn scale=2
+bst_one       burst 1e-9 bs_f0 scale=3
+bst_bad       burst 0 bs_f0,bs_hr scale=2 expect:raises=1
+bst_nan       burst 0 bs_f0,bs_f1,bs_f2,bs_f3,bs_nan shifts=1 scale=2 expect:raises=1
