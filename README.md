@@ -24,9 +24,8 @@ def main() raises:
 
 ## Install
 
-Needs a Mojo nightly: the code uses 1.2 syntax and `max.algorithm.parallelize`, and Mojo 1.1.0 does not finish
-compiling it. `pyproject.toml` pins `mojo 1.2.0.dev2026102105` and `max 26.7.0.dev2026102105` from the Modular
-nightly index; if that index drops the build, the pin has to move.
+Needs Mojo 1.2 and MAX 26.7: the code uses 1.2 syntax and `max.algorithm.parallelize`, and Mojo 1.1.0 does
+not finish compiling it. `pyproject.toml` pins `mojo 1.2.0` and `max 26.7.0`.
 
 ```
 uv sync                                                          # Mojo, MAX, numpy, opencv-python-headless 5.0
@@ -82,7 +81,7 @@ cv2's BFMatcher).
 
 ## Limits
 
-- Needs the pinned Mojo and MAX nightly (see Install). Linux x86-64 is what CI and the numbers cover.
+- Needs Mojo 1.2 and MAX 26.7 (see Install). Linux x86-64 is what CI and the numbers cover.
 - No GPU path and no Python binding. The input and output of the command-line tool is `.mcv`, not PNG or JPEG.
 - Not every cv2 function exists; the ones that do are the lists above. Missing and different behaviour is in
   [docs/2d.md](docs/2d.md): cvtColor to YUV, anisotropic or even erode kernels, and so on.

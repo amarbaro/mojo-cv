@@ -9,7 +9,7 @@ CPU computer vision for Mojo, with cv2 5.0 as the oracle. 258 2D rows and 161 3D
 
 ## Install
 
-Needs the pinned Mojo and MAX nightly in `pyproject.toml` (`uv sync`). Mojo 1.1.0 does not compile it.
+Needs Mojo 1.2 and MAX 26.7 from `pyproject.toml` (`uv sync`). Mojo 1.1.0 does not compile it.
 `mojo build -I <repo>/src app.mojo`, then `from mojocv.imgproc import ...`.
 
 ## Use
