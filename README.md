@@ -1,6 +1,9 @@
 # mojo-cv
 
-[![CI](https://github.com/amarbaro/mojo-cv/actions/workflows/ci.yml/badge.svg)](https://github.com/amarbaro/mojo-cv/actions/workflows/ci.yml)
+<!-- badges -->
+[![ci](https://github.com/amarbaro/mojo-cv/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/amarbaro/mojo-cv/actions/workflows/ci.yml) [![latest release](https://img.shields.io/github/v/release/amarbaro/mojo-cv)](https://github.com/amarbaro/mojo-cv/releases/latest) [![license](https://img.shields.io/github/license/amarbaro/mojo-cv)](https://github.com/amarbaro/mojo-cv/blob/main/LICENSE)
+<!-- /badges -->
+
 
 OpenCV-style computer vision written from scratch in Mojo, on the CPU: filters, colour, resize and warps, contours,
 ORB, optical flow, camera calibration and pose, stereo, plus 3D helpers (octree diffs, phase correlation, NURBS fits,
