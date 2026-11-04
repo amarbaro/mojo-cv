@@ -21,5 +21,16 @@ for (h, w, ch, dw, dh) in [(70, 101, 3, 67, 41), (70, 101, 3, 150, 90), (33, 47,
     o = mcv.load(".work/c4o.mcv")
     d = np.abs(o.astype(int) - cv2.resize(a, (dw, dh), interpolation=cv2.INTER_LINEAR).reshape(o.shape).astype(int)).max()
     print("resize general", h, w, ch, "->", dh, dw, "maxdiff", d); bad += d > 1
+# cvtColor 8-bit SIMD blocks at every width 1..40 (a block must never touch bytes past its row), 3 and 64 rows
+for name, cv in [("bgr2rgb", cv2.COLOR_BGR2RGB), ("bgr2gray", cv2.COLOR_BGR2GRAY), ("rgb2gray", cv2.COLOR_RGB2GRAY)]:
+    nbad = 0
+    for w in range(1, 41):
+        for h in (3, 64):
+            a = rng.integers(0, 256, (h, w, 3), dtype=np.uint8)
+            mcv.save(a, ".work/c4.mcv")
+            subprocess.run([".bin/mojo-cv", "cvtColor", ".work/c4o.mcv", ".work/c4.mcv", "code=" + name], check=True, capture_output=True)
+            o = mcv.load(".work/c4o.mcv")
+            nbad += int(np.abs(o.reshape(h, w, -1).astype(int) - cv2.cvtColor(a, cv).reshape(h, w, -1).astype(int)).max() > 0)
+    print("cvtColor", name, "widths 1..40: bad", nbad); bad += nbad
 print("BAD", bad)
 sys.exit(1 if bad else 0)
