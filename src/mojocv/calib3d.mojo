@@ -1,7 +1,7 @@
 # calib3d: camera models, pose and epipolar geometry, rectification, stereo and fiducials, all on small float64
 # matrices stored as Mat[float64] (rows x cols x 1). Conventions follow cv2 5.0: dist = (k1, k2, p1, p2[, k3[, k4,
 # k5, k6[, s1, s2, s3, s4]]]), rvec/tvec map object to camera coordinates.
-from std.math import sqrt, atan, atan2, tan, cos, sin, acos, floor
+from std.math import sqrt, atan, atan2, tan, cos, sin, acos, floor, log1p
 from mojocv.mat import Mat, load, save
 from mojocv.core import Args, par
 from mojocv.imgproc import rint, good_features, sepfilter, find_contours
@@ -422,7 +422,7 @@ def ransac_iters(inliers: Int, n: Int, m: Int, conf: Float64, cap: Int) -> Int:
         return cap
     if wm >= 1.0:
         return 1
-    return min(cap, Int(floor(log_(1.0 - conf) / log_(1.0 - wm))) + 1)
+    return min(cap, Int(floor(log_(1.0 - conf) / log1p(-wm))) + 1)  # log1p: 1 - wm rounds to 1.0 below 1.1e-16
 
 
 def log_(x: Float64) -> Float64:
