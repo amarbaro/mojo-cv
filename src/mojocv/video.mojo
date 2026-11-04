@@ -453,8 +453,10 @@ def fb_solve(m: Mat[F32], block: Int, mut flow: Mat[F32]):
             flow.set(y, x, 1, Float32((g11 * h2 - g12 * h1) * idet))
 
 
-def farneback(prev: Mat[DType.uint8], nxt: Mat[DType.uint8], pyr_scale: Float64, levels_in: Int, winsize: Int, iters: Int, poly_n: Int, poly_sigma: Float64) -> Mat[F32]:
+def farneback(prev: Mat[DType.uint8], nxt: Mat[DType.uint8], pyr_scale: Float64, levels_in: Int, winsize: Int, iters: Int, poly_n: Int, poly_sigma: Float64) raises -> Mat[F32]:
     """cv2.calcOpticalFlowFarneback (box window): coarse-to-fine, expansions of the blurred and resized frames."""
+    if not prev.same_shape(nxt) or prev.ch != 1:
+        raise Error("mojocv: calcOpticalFlowFarneback: needs two single-channel frames of one shape")
     var levels = 0
     var scale = Float64(1)
     for _ in range(levels_in):
