@@ -1,6 +1,5 @@
 # 3D / time / CAD / CAE ops for the mojo-cv CLI: `mojo-cv3d OP OUT IN... [k=v]`. src/main.mojo calls
 # dispatch3d for any op it does not know. Every op reads and writes .mcv files; scalars are printed too.
-from std.sys import argv
 from std.time import perf_counter_ns
 from std.collections import Dict
 from mojocv.mat import Mat, load, save
@@ -295,12 +294,3 @@ def dispatch3d(args: List[String]) raises -> Bool:
         print("time best_ms=", Float64(best) / 1e6, "reps=", reps)
     return True
 
-
-def main() raises:
-    var a = List[String]()
-    var av = argv()
-    for i in range(1, len(av)):
-        a.append(String(av[i]))
-    if not dispatch3d(a):
-        print("FAIL cli3d: unknown op or too few arguments")
-        raise Error("cli3d")

@@ -5,7 +5,7 @@ cd "$(dirname "$0")/.."
 PY=${PY:-.venv/bin/python}
 mkdir -p .bin .work
 rm -f .bin/mojo-cv3d
-if ! log=$(.venv/bin/mojo build -I src src/mojocv/cli3d.mojo -o .bin/mojo-cv3d 2>&1); then
+if ! log=$(.venv/bin/mojo build -I src tools/cli3d.mojo -o .bin/mojo-cv3d 2>&1); then
   echo "$log" | grep -E "error" | head -20
   echo "FAIL build: mojo build"; exit 1
 fi
