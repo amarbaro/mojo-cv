@@ -1775,7 +1775,9 @@ def warp_affine[dt: DType](src: Mat[dt], m: List[Float64], dw: Int, dh: Int, kin
     return o^
 
 
-def remap[dt: DType](src: Mat[dt], mx: Mat[F32], my: Mat[F32], kind: Int, mode: Int, bval: Float64) -> Mat[dt]:
+def remap[dt: DType](src: Mat[dt], mx: Mat[F32], my: Mat[F32], kind: Int, mode: Int, bval: Float64) raises -> Mat[dt]:
+    if not mx.same_shape(my):
+        raise Error("mojocv: remap: mapy shape differs from mapx")
     var o = Mat[dt](mx.rows, mx.cols, src.ch, False)
     var po = o.ptr()
     var ps = src.ptr()

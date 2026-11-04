@@ -53,5 +53,10 @@ def glb(acc):
 for count in (1 << 62, 3 << 61, 1 << 40):  # the first two wrap (count - 1) * 12; the last is a plain too-big control
     acc = {"bufferView": 0, "componentType": 5126, "count": count, "type": "VEC3"}
     expect_error(f"glb_read accessor count {count}", [".bin/mojo-cv3d", "glb_read", f"{W}/g.mcv", put("wrap.glb", glb(acc)), f"faces={W}/gf.mcv"], timeout=10, msg=b"reads outside")
+# shapes and lengths the ops index without checking (each must raise a mojocv error, not read out of range)
+u8 = lambda r, c, ch=1: mcv(r, c, ch, 0, bytes((i * 7) % 256 for i in range(r * c * ch)))
+f32 = lambda r, c, ch=1: mcv(r, c, ch, 1, struct.pack("<%df" % (r * c * ch), *[float(i % 5) for i in range(r * c * ch)]))
+O = f"{W}/o.mcv"
+expect_error("remap: mapy shape differs from mapx", [".bin/mojo-cv", "remap", O, put("rm_i.mcv", u8(4, 4)), put("rm_x.mcv", f32(4, 4)), put("rm_y.mcv", f32(2, 2))], msg=b"mojocv: remap")
 print("BAD", bad)
 sys.exit(1 if bad else 0)
