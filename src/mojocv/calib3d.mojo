@@ -396,8 +396,10 @@ struct Rng(Movable):
         self.s ^= self.s << 17
         return self.s
 
-    def sample(mut self, n: Int, k: Int) -> List[Int]:
+    def sample(mut self, n: Int, k: Int) raises -> List[Int]:
         """k distinct indices below n."""
+        if n < k:
+            raise Error("mojocv: need at least " + String(k) + " points, got " + String(n))
         var out = List[Int]()
         while len(out) < k:
             var v = Int(self.next() % UInt64(n))
@@ -448,7 +450,7 @@ def affine_fit(a: Mx, b: Mx, idx: List[Int]) -> Mx:
     return mt(x)
 
 
-def estimate_affine(a: Mx, b: Mx, thresh: Float64, max_iters: Int, conf: Float64) -> Tuple[Mx, Mat[DType.uint8]]:
+def estimate_affine(a: Mx, b: Mx, thresh: Float64, max_iters: Int, conf: Float64) raises -> Tuple[Mx, Mat[DType.uint8]]:
     var n = a.rows
     var rng = Rng()
     var best = mx(2, 3)
@@ -754,7 +756,7 @@ def solve_pnp(obj: Mx, img: Mx, k: Mx, d: Mx) -> Tuple[List[Float64], List[Float
     return (rv^, tv^)
 
 
-def solve_pnp_ransac(obj: Mx, img: Mx, k: Mx, d: Mx, thresh: Float64, max_iters: Int, conf: Float64) -> Tuple[List[Float64], List[Float64], List[Int]]:
+def solve_pnp_ransac(obj: Mx, img: Mx, k: Mx, d: Mx, thresh: Float64, max_iters: Int, conf: Float64) raises -> Tuple[List[Float64], List[Float64], List[Int]]:
     var n = obj.rows
     var nrm = undistort_points(img, k, d, ident(3), mx(0, 0), False)
     var planar = is_planar(obj)
@@ -1019,7 +1021,7 @@ def normalize_pixels(p: Mx, k: Mx) -> Mx:
     return o^
 
 
-def find_essential(p1: Mx, p2: Mx, k: Mx, thresh: Float64, conf: Float64) -> Tuple[Mx, Mat[DType.uint8]]:
+def find_essential(p1: Mx, p2: Mx, k: Mx, thresh: Float64, conf: Float64) raises -> Tuple[Mx, Mat[DType.uint8]]:
     """RANSAC over all real five-point essential models; unit Frobenius norm, largest entry positive."""
     var n = p1.rows
     var x1 = normalize_pixels(p1, k)

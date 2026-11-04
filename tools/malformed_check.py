@@ -15,12 +15,12 @@ def put(name, data):
     return f"{W}/{name}"
 
 
-def expect_error(label, cmd, timeout=10):
-    """cmd must exit 1 with 'mojocv' in its stderr: a raised Error."""
+def expect_error(label, cmd, timeout=10, msg=b"mojocv"):
+    """cmd must exit 1 with msg (default 'mojocv') in its stderr: a raised Error."""
     global bad
     try:
         r = subprocess.run(cmd, capture_output=True, timeout=timeout)
-        ok, why = r.returncode == 1 and b"mojocv" in r.stderr, f"rc {r.returncode}: {r.stderr[-120:]!r}"
+        ok, why = r.returncode == 1 and msg in r.stderr, f"rc {r.returncode}: {r.stderr[-120:]!r}"
     except subprocess.TimeoutExpired:
         ok, why = False, f"no exit in {timeout} s"
     print(("ok   " if ok else "BAD  ") + label + ("" if ok else "  " + why))
@@ -34,5 +34,13 @@ expect_error("load: 2^31 x 2^31 x 4 header", [".bin/mojo-cv", "flip", f"{W}/o.mc
 expect_error("peek_code: empty .mcv", [".bin/mojo-cv", "flip", f"{W}/o.mcv", put("empty.mcv", b"")])
 expect_error("peek_code: 15-byte .mcv", [".bin/mojo-cv", "flip", f"{W}/o.mcv", put("short.mcv", mcv(1, 1, 1, 0)[:15])])
 expect_error("core op without an input", [".bin/mojo-cv", "flip", f"{W}/o.mcv"])
+# Rng.sample(n, k) with n < k looped forever; callers need at least 3 (affine), 4 (PnP), 5 (essential) points
+pts = lambda n: mcv(n, 2, 1, 3, struct.pack("<%dd" % (2 * n), *[float(i % 7) for i in range(2 * n)]))
+expect_error("estimateAffine2D with 2 points", [".bin/mojo-cv", "estimateAffine2D", f"{W}/o.mcv", put("p2a.mcv", pts(2)), put("p2b.mcv", pts(2))], timeout=5)
+expect_error("estimateAffine2D with 0 points", [".bin/mojo-cv", "estimateAffine2D", f"{W}/o.mcv", put("p0a.mcv", pts(0)), put("p0b.mcv", pts(0))], timeout=5)
+f64 = lambda r, c, *v: mcv(r, c, 1, 3, struct.pack("<%dd" % (r * c), *(list(v) + [1.0] * (r * c - len(v)))))
+K = put("k.mcv", f64(3, 3, 500, 0, 320, 0, 500, 240, 0, 0, 1))
+expect_error("solvePnPRansac with 3 points", [".bin/mojo-cv", "solvePnPRansac", f"{W}/o.mcv", put("o3.mcv", f64(3, 3)), put("i3.mcv", f64(3, 2)), K, put("d0.mcv", f64(0, 1))], timeout=5, msg=b"need at least 4 points")
+expect_error("findEssentialMat with 4 points", [".bin/mojo-cv", "findEssentialMat", f"{W}/o.mcv", put("e1.mcv", f64(4, 2)), put("e2.mcv", f64(4, 2)), K], timeout=5, msg=b"need at least 5 points")
 print("BAD", bad)
 sys.exit(1 if bad else 0)
