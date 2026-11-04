@@ -491,17 +491,6 @@ def estimate_affine(a: Mx, b: Mx, thresh: Float64, max_iters: Int, conf: Float64
 # ---- pose from 2D-3D --------------------------------------------------------------------------------------
 
 
-def polar_rotation(m: Mx) -> Mx:
-    """The rotation nearest to m: m (m^T m)^(-1/2)."""
-    var ev = eigh(mm(mt(m), m))
-    var isq = mx(3, 3)
-    for k in range(3):
-        for i in range(3):
-            for j in range(3):
-                isq.data[i * 3 + j] += ev[1].at(i, k) * ev[1].at(j, k) / sqrt(ev[0][k])
-    return mm(m, isq)
-
-
 def null_vector(a: Mx) -> List[Float64]:
     """Unit right singular vector of the smallest singular value of a."""
     var ev = eigh(mm(mt(a), a))
@@ -1395,7 +1384,7 @@ def stereo_sgm(l: Mat[DType.uint8], r: Mat[DType.uint8], min_d: Int, nd: Int, bl
             var ok = True
             if uniq > 0:
                 for d in range(nd):
-                    if abs(d - bd) > 1 and Int(tp[unsafe_offset=base + d]) * 100 <= best * (100 + uniq) - 0 and Int(tp[unsafe_offset=base + d]) * 100 < best * (100 + uniq):
+                    if abs(d - bd) > 1 and Int(tp[unsafe_offset=base + d]) * 100 < best * (100 + uniq):
                         ok = False
             dl[y * cw + x] = bd if ok else -1
     for y in range(h):

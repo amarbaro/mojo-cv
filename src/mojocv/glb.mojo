@@ -187,14 +187,6 @@ struct Js(Movable):
             k += 1
         return c
 
-    def count(self, node: Int) -> Int:
-        var n = 0
-        var c = self.first[node] if node >= 0 else -1
-        while c >= 0:
-            n += 1
-            c = self.next[c]
-        return n
-
 
 def _skip(b: List[UInt8], mut p: Int):
     while p < len(b) and (b[p] == 32 or b[p] == 9 or b[p] == 10 or b[p] == 13):
