@@ -1805,8 +1805,10 @@ def remap[dt: DType](src: Mat[dt], mx: Mat[F32], my: Mat[F32], kind: Int, mode: 
     return o^
 
 
-def blob[dt: DType](src: Mat[dt], dw: Int, dh: Int, scale: Float32, mean: List[Float32], swap: Bool) -> Mat[F32]:
+def blob[dt: DType](src: Mat[dt], dw: Int, dh: Int, scale: Float32, mean: List[Float32], swap: Bool) raises -> Mat[F32]:
     """cv2.dnn.blobFromImage with a plain resize: planes laid out as (channel * h, w), float32."""
+    if len(mean) < src.ch:
+        raise Error("mojocv: blobFromImage: mean has " + String(len(mean)) + " values for " + String(src.ch) + " channels")
     var r = resize(src, dw, dh, 1) if (dw != src.cols or dh != src.rows) else Mat[dt](copy=src)
     var o = Mat[F32](r.ch * dh, dw, 1, False)
     var ch = r.ch
