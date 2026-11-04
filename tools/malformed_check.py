@@ -42,5 +42,16 @@ f64 = lambda r, c, *v: mcv(r, c, 1, 3, struct.pack("<%dd" % (r * c), *(list(v) +
 K = put("k.mcv", f64(3, 3, 500, 0, 320, 0, 500, 240, 0, 0, 1))
 expect_error("solvePnPRansac with 3 points", [".bin/mojo-cv", "solvePnPRansac", f"{W}/o.mcv", put("o3.mcv", f64(3, 3)), put("i3.mcv", f64(3, 2)), K, put("d0.mcv", f64(0, 1))], timeout=5, msg=b"need at least 4 points")
 expect_error("findEssentialMat with 4 points", [".bin/mojo-cv", "findEssentialMat", f"{W}/o.mcv", put("e1.mcv", f64(4, 2)), put("e2.mcv", f64(4, 2)), K], timeout=5, msg=b"need at least 5 points")
+# glb accessor bounds: (count - 1) * stride must not wrap to a small number
+import json
+def glb(acc):
+    doc = {"asset": {"version": "2.0"}, "meshes": [{"primitives": [{"attributes": {"POSITION": 0}}]}],
+           "bufferViews": [{"buffer": 0, "byteLength": 16}], "accessors": [acc]}
+    js = json.dumps(doc).encode(); js += b" " * (-len(js) % 4)
+    return (struct.pack("<III", 0x46546C67, 2, 12 + 8 + len(js) + 8 + 16) + struct.pack("<II", len(js), 0x4E4F534A) + js
+            + struct.pack("<II", 16, 0x004E4942) + bytes(16))
+for count in (1 << 62, 3 << 61, 1 << 40):  # the first two wrap (count - 1) * 12; the last is a plain too-big control
+    acc = {"bufferView": 0, "componentType": 5126, "count": count, "type": "VEC3"}
+    expect_error(f"glb_read accessor count {count}", [".bin/mojo-cv3d", "glb_read", f"{W}/g.mcv", put("wrap.glb", glb(acc)), f"faces={W}/gf.mcv"], timeout=10, msg=b"reads outside")
 print("BAD", bad)
 sys.exit(1 if bad else 0)

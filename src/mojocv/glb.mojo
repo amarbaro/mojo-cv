@@ -340,7 +340,8 @@ def _accessor(
     off += Int(js.num[js.get(a, "byteOffset")]) if js.get(a, "byteOffset") >= 0 else 0
     var blen = Int(js.num[_need(js, js.get(bv, "byteLength"), "bufferView byteLength")])
     var stride = Int(js.num[js.get(bv, "byteStride")]) if js.get(bv, "byteStride") >= 0 else ncomp * csize
-    if count < 1 or stride < ncomp * csize or off < 0 or off + (count - 1) * stride + ncomp * csize > off - (
+    # count and off are bounded by the BIN size first, so the products below cannot wrap
+    if count < 1 or stride < ncomp * csize or off < 0 or off > len(bin) or count > len(bin) // stride + 1 or off + (count - 1) * stride + ncomp * csize > off - (
         Int(js.num[js.get(a, "byteOffset")]) if js.get(a, "byteOffset") >= 0 else 0
     ) + blen or off + (count - 1) * stride + ncomp * csize > len(bin):
         raise Error(String("mojocv: glb: accessor ", acc, " reads outside its bufferView or the BIN chunk"))
