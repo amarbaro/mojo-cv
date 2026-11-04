@@ -1,0 +1,47 @@
+# rattler-build recipe, modular-community shape.
+# Build locally: rattler-build build -r recipe.yaml -c https://conda.modular.com/max -c conda-forge
+context:
+  version: 0.1.1
+
+package:
+  name: "mojo-cv"
+  version: ${{ version }}
+
+source:
+  - path: .
+
+build:
+  number: 0
+  script:
+    - mojo precompile src/mojocv -o ${{ PREFIX }}/lib/mojo/mojocv.mojoc
+
+requirements:
+  host:
+    - max =26.7.0
+  build:
+    - max =26.7.0
+  run:
+    - ${{ pin_compatible('max') }}
+
+tests:
+  - script:
+    - if: unix
+      then:
+        - mojo build -I src examples/quickstart.mojo -o quickstart
+    files:
+      source:
+        - src/
+        - examples/
+
+about:
+  homepage: https://github.com/amarbaro/mojo-cv
+  license: Apache-2.0
+  license_file: LICENSE
+  summary: Computer vision for Mojo
+  repository: https://github.com/amarbaro/mojo-cv
+
+extra:
+  maintainers:
+    - amarbaro.org
+  project_name:
+    - mojo-cv

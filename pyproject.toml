@@ -4,12 +4,10 @@ version = "0.1.1"
 description = "Computer vision for Mojo: OpenCV-style 2D ops, calibration, 3D geometry and CAD export, each checked against cv2 5.0 or an exact oracle"
 license = "Apache-2.0"
 requires-python = ">=3.11,<3.15"
-dependencies = [
-    "mojo==1.2.0",
-    "max==26.7.0",
-    "numpy>=2.0",
-    "opencv-python-headless>=5.0,<5.1",
-]
+dependencies = ["mojo==1.2.0", "max==26.7.0"]
+
+[dependency-groups]
+dev = ["numpy>=2.0", "opencv-python-headless>=5.0,<5.1"]  # oracles in tools/ and tests/, never imported by the library
 
 [tool.uv]
 prerelease = "allow"
