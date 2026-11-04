@@ -2847,9 +2847,11 @@ def hog_blocks(src: Mat[DType.uint8]) -> Mat[F32]:
     return o^
 
 
-def hog_scores(blocks: Mat[F32], svm: Mat[F32]) -> Mat[F32]:
+def hog_scores(blocks: Mat[F32], svm: Mat[F32]) raises -> Mat[F32]:
     """SVM score of every 64 x 128 window on the 8-pixel grid: (window rows, window cols). The 7 blocks of one window
     row are contiguous in `blocks`, so each of the 15 rows is one 252-float dot product against a re-laid-out SVM."""
+    if svm.size() != 3781:  # 3780 weights and the bias
+        raise Error("mojocv: HOGScores: svm must hold 3781 floats, got " + String(svm.size()))
     var ny = blocks.rows - 14
     var nx = blocks.cols - 6
     var o = Mat[F32](max(ny, 0), max(nx, 0), 1, False)
@@ -2954,7 +2956,7 @@ def group_rects(r: List[Int], thresh: Int) -> List[Int]:
     return out^
 
 
-def hog_detect(src: Mat[DType.uint8], svm: Mat[F32], hit: Float32, scale0: Float64, group: Int) -> Mat[DType.int32]:
+def hog_detect(src: Mat[DType.uint8], svm: Mat[F32], hit: Float32, scale0: Float64, group: Int) raises -> Mat[DType.int32]:
     """HOGDescriptor.detectMultiScale with winStride 8 and no padding: (n, 4) boxes x, y, w, h."""
     var scales = List[Float64]()
     var sc = Float64(1)

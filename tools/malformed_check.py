@@ -59,5 +59,6 @@ f32 = lambda r, c, ch=1: mcv(r, c, ch, 1, struct.pack("<%df" % (r * c * ch), *[f
 O = f"{W}/o.mcv"
 expect_error("remap: mapy shape differs from mapx", [".bin/mojo-cv", "remap", O, put("rm_i.mcv", u8(4, 4)), put("rm_x.mcv", f32(4, 4)), put("rm_y.mcv", f32(2, 2))], msg=b"mojocv: remap")
 expect_error("blobFromImage: 1 mean value for 3 channels", [".bin/mojo-cv", "blobFromImage", O, put("bl_i.mcv", u8(4, 4, 3)), "mean=1.0"], msg=b"mojocv: blobFromImage")
+expect_error("HOGScores: svm with 10 floats", [".bin/mojo-cv", "HOGScores", O, put("hg_i.mcv", u8(128, 64)), put("hg_s.mcv", f32(1, 10))], msg=b"mojocv: HOGScores")
 print("BAD", bad)
 sys.exit(1 if bad else 0)
