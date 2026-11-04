@@ -64,5 +64,12 @@ expect_error("calcOpticalFlowFarneback: frames of different shape", [".bin/mojo-
 expect_error("calcOpticalFlowFarneback: 3-channel frames", [".bin/mojo-cv", "calcOpticalFlowFarneback", O, put("fb_c.mcv", u8(40, 40, 3)), put("fb_d.mcv", u8(40, 40, 3))], msg=b"mojocv: calcOpticalFlowFarneback")
 expect_error("bfmatch: descriptors of different width", [".bin/mojo-cv", "bfmatch", O, put("kn_q.mcv", u8(3, 32)), put("kn_t.mcv", u8(5, 16))], msg=b"mojocv: descriptor widths")
 expect_error("knnmatch: descriptors of different width", [".bin/mojo-cv", "knnmatch", O, put("kn_q.mcv", u8(3, 32)), put("kn_t.mcv", u8(5, 16))], msg=b"mojocv: descriptor widths")
+# threshold: a maxval outside the dtype saturates like cv2 (300 -> 255, -5 -> 0) instead of an undefined float-to-uint8 cast
+for mv, want in ((300.0, 255), (-5.0, 0)):
+    p = subprocess.run([".bin/mojo-cv", "threshold", O, put("th_i.mcv", mcv(8, 8, 1, 0, bytes([100]) * 64)), "thresh=50", f"maxval={mv}", "type=0"], capture_output=True)
+    got = open(O, "rb").read()[16:] if p.returncode == 0 else b""
+    ok = p.returncode == 0 and len(got) == 64 and set(got) == {want}
+    print(("ok   " if ok else "BAD  ") + f"threshold maxval={mv} saturates to {want}" + ("" if ok else f"  rc {p.returncode}, values {sorted(set(got))[:6]}"))
+    bad += not ok
 print("BAD", bad)
 sys.exit(1 if bad else 0)

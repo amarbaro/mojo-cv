@@ -5,6 +5,7 @@ from std.sys.info import simd_width_of
 from std.utils import IndexList
 from std.sys.intrinsics import gather
 from std.math import sqrt, exp, floor, ceil, cos, sin, atan2, cbrt
+from std.utils.numerics import max_finite, min_finite
 from mojocv.mat import Mat, load, save
 from mojocv.core import Args, DTS, peek_code, par, par_dyn
 from std.math import log as log_
@@ -507,7 +508,11 @@ def threshold[dt: DType](src: Mat[dt], thresh: Float64, maxval: Float64, kind: I
         th = Scalar[dt](floor(thresh))
     else:
         th = Scalar[dt](thresh)
-    var mx = Scalar[dt](maxval)
+    var mx: Scalar[dt]
+    comptime if dt.is_integral():  # saturate like cv2: 300 -> 255 for uint8, not an undefined float-to-int cast
+        mx = Scalar[dt](min(max(maxval, Float64(min_finite[dt]())), Float64(max_finite[dt]())))
+    else:
+        mx = Scalar[dt](maxval)
     var n = src.cols * src.ch
     var pa = src.ptr()
     var po = o.ptr()
