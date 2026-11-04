@@ -71,13 +71,24 @@ def load[dt: DType](path: String) raises -> Mat[dt]:
     var b = open(path, "r").read_bytes()
     if len(b) < 16 or String(StringSlice(unsafe_from_utf8=Span(b)[:4])) != MAGIC:
         raise Error("mojocv: not an MCV1 file: " + path)
-    var m = Mat[dt](_u32(b, 4), _u32(b, 8), Int(b[12]) | Int(b[13]) << 8)
     var code = Int(b[14]) | Int(b[15]) << 8
     if code != dt_code[dt]():
         raise Error(String("mojocv: ", path, " holds dtype code ", code, ", wanted ", dt_code[dt]()))
-    var n = m.size() * size_of[Scalar[dt]]()
+    var rows = _u32(b, 4)
+    var cols = _u32(b, 8)
+    var ch = Int(b[12]) | Int(b[13]) << 8
+    # rows * cols * ch * itemsize without wrapping: a product that passes the file size is checked step by step
+    var n = size_of[Scalar[dt]]()
+    for f in [rows, cols, ch]:
+        if f == 0:
+            n = 0
+            break
+        if n > (len(b) - 16) // f:
+            raise Error(String("mojocv: ", path, " header wants more than its ", len(b) - 16, " data bytes"))
+        n *= f
     if len(b) != 16 + n:
         raise Error(String("mojocv: ", path, " has ", len(b) - 16, " data bytes, wanted ", n))
+    var m = Mat[dt](rows, cols, ch)
     var dst = m.ptr().bitcast[UInt8]()
     for i in range(n):
         dst[i] = b[16 + i]
