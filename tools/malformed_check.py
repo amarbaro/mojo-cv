@@ -62,5 +62,7 @@ expect_error("blobFromImage: 1 mean value for 3 channels", [".bin/mojo-cv", "blo
 expect_error("HOGScores: svm with 10 floats", [".bin/mojo-cv", "HOGScores", O, put("hg_i.mcv", u8(128, 64)), put("hg_s.mcv", f32(1, 10))], msg=b"mojocv: HOGScores")
 expect_error("calcOpticalFlowFarneback: frames of different shape", [".bin/mojo-cv", "calcOpticalFlowFarneback", O, put("fb_a.mcv", u8(40, 40)), put("fb_b.mcv", u8(20, 20))], msg=b"mojocv: calcOpticalFlowFarneback")
 expect_error("calcOpticalFlowFarneback: 3-channel frames", [".bin/mojo-cv", "calcOpticalFlowFarneback", O, put("fb_c.mcv", u8(40, 40, 3)), put("fb_d.mcv", u8(40, 40, 3))], msg=b"mojocv: calcOpticalFlowFarneback")
+expect_error("bfmatch: descriptors of different width", [".bin/mojo-cv", "bfmatch", O, put("kn_q.mcv", u8(3, 32)), put("kn_t.mcv", u8(5, 16))], msg=b"mojocv: descriptor widths")
+expect_error("knnmatch: descriptors of different width", [".bin/mojo-cv", "knnmatch", O, put("kn_q.mcv", u8(3, 32)), put("kn_t.mcv", u8(5, 16))], msg=b"mojocv: descriptor widths")
 print("BAD", bad)
 sys.exit(1 if bad else 0)

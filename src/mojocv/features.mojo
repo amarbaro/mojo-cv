@@ -14,9 +14,11 @@ def hamming(a: Mat[DType.uint8], ia: Int, b: Mat[DType.uint8], ib: Int) -> Int:
     return d
 
 
-def knn2(q: Mat[DType.uint8], t: Mat[DType.uint8]) -> Mat[DType.int32]:
+def knn2(q: Mat[DType.uint8], t: Mat[DType.uint8]) raises -> Mat[DType.int32]:
     """For every query row the two nearest train rows by Hamming distance: (n, 4) = train1, dist1, train2, dist2.
     Equal distances keep the lower train index first, as cv2's brute-force matcher does."""
+    if q.cols != t.cols:
+        raise Error("mojocv: descriptor widths differ (query " + String(q.cols) + " bytes, train " + String(t.cols) + ")")
     var o = Mat[DType.int32](q.rows, 4, 1)
     var po = o.ptr()
 
