@@ -801,13 +801,13 @@ def _lab_luv_vec[dt: DType, w: Int, luv: Bool, inverse: Bool](ps: Ptr[Scalar[dt]
         var g: V
         var r: V
         comptime if is8:
-            b = gam8.unsafe_gather(ps.strided_load[width=w](3).cast[DType.int32]())
-            g = gam8.unsafe_gather((ps + 1).strided_load[width=w](3).cast[DType.int32]())
-            r = gam8.unsafe_gather((ps + 2).strided_load[width=w](3).cast[DType.int32]())
+            b = gam8.unsafe_gather(ps.unsafe_strided_load[width=w](3).cast[DType.int32]())
+            g = gam8.unsafe_gather((ps + 1).unsafe_strided_load[width=w](3).cast[DType.int32]())
+            r = gam8.unsafe_gather((ps + 2).unsafe_strided_load[width=w](3).cast[DType.int32]())
         else:
-            b = _lut(gam, ps.strided_load[width=w](3).cast[F32]())
-            g = _lut(gam, (ps + 1).strided_load[width=w](3).cast[F32]())
-            r = _lut(gam, (ps + 2).strided_load[width=w](3).cast[F32]())
+            b = _lut(gam, ps.unsafe_strided_load[width=w](3).cast[F32]())
+            g = _lut(gam, (ps + 1).unsafe_strided_load[width=w](3).cast[F32]())
+            r = _lut(gam, (ps + 2).unsafe_strided_load[width=w](3).cast[F32]())
         var xx = 0.412453 * r + 0.357580 * g + 0.180423 * b
         var yy = 0.212671 * r + 0.715160 * g + 0.072169 * b
         var zz = 0.019334 * r + 0.119193 * g + 0.950227 * b
@@ -826,17 +826,17 @@ def _lab_luv_vec[dt: DType, w: Int, luv: Bool, inverse: Bool](ps: Ptr[Scalar[dt]
             var o0 = l * 2.55
             var o1 = (c1 + 134.0) * (255.0 / 354.0) if luv else c1 + 128.0
             var o2 = (c2 + 140.0) * (255.0 / 262.0) if luv else c2 + 128.0
-            po.strided_store[width=w](min(max(floor(o0 + 0.5), 0.0), 255.0).cast[dt](), 3)
-            (po + 1).strided_store[width=w](min(max(floor(o1 + 0.5), 0.0), 255.0).cast[dt](), 3)
-            (po + 2).strided_store[width=w](min(max(floor(o2 + 0.5), 0.0), 255.0).cast[dt](), 3)
+            po.unsafe_strided_store[width=w](min(max(floor(o0 + 0.5), 0.0), 255.0).cast[dt](), 3)
+            (po + 1).unsafe_strided_store[width=w](min(max(floor(o1 + 0.5), 0.0), 255.0).cast[dt](), 3)
+            (po + 2).unsafe_strided_store[width=w](min(max(floor(o2 + 0.5), 0.0), 255.0).cast[dt](), 3)
         else:
-            po.strided_store[width=w](l.cast[dt](), 3)
-            (po + 1).strided_store[width=w](c1.cast[dt](), 3)
-            (po + 2).strided_store[width=w](c2.cast[dt](), 3)
+            po.unsafe_strided_store[width=w](l.cast[dt](), 3)
+            (po + 1).unsafe_strided_store[width=w](c1.cast[dt](), 3)
+            (po + 2).unsafe_strided_store[width=w](c2.cast[dt](), 3)
     else:
-        var l = ps.strided_load[width=w](3).cast[F32]()
-        var c1 = (ps + 1).strided_load[width=w](3).cast[F32]()
-        var c2 = (ps + 2).strided_load[width=w](3).cast[F32]()
+        var l = ps.unsafe_strided_load[width=w](3).cast[F32]()
+        var c1 = (ps + 1).unsafe_strided_load[width=w](3).cast[F32]()
+        var c2 = (ps + 2).unsafe_strided_load[width=w](3).cast[F32]()
         comptime if is8:
             l = l * (100.0 / 255.0)
             c1 = c1 * (354.0 / 255.0) - 134.0 if luv else c1 - 128.0
@@ -864,13 +864,13 @@ def _lab_luv_vec[dt: DType, w: Int, luv: Bool, inverse: Bool](ps: Ptr[Scalar[dt]
         var g = _lut(ungam, -0.969256 * xx + 1.875991 * yy + 0.041556 * zz)
         var b = _lut(ungam, 0.055648 * xx - 0.204043 * yy + 1.057311 * zz)
         comptime if is8:
-            po.strided_store[width=w](min(max(floor(b * 255.0 + 0.5), 0.0), 255.0).cast[dt](), 3)
-            (po + 1).strided_store[width=w](min(max(floor(g * 255.0 + 0.5), 0.0), 255.0).cast[dt](), 3)
-            (po + 2).strided_store[width=w](min(max(floor(r * 255.0 + 0.5), 0.0), 255.0).cast[dt](), 3)
+            po.unsafe_strided_store[width=w](min(max(floor(b * 255.0 + 0.5), 0.0), 255.0).cast[dt](), 3)
+            (po + 1).unsafe_strided_store[width=w](min(max(floor(g * 255.0 + 0.5), 0.0), 255.0).cast[dt](), 3)
+            (po + 2).unsafe_strided_store[width=w](min(max(floor(r * 255.0 + 0.5), 0.0), 255.0).cast[dt](), 3)
         else:
-            po.strided_store[width=w](b.cast[dt](), 3)
-            (po + 1).strided_store[width=w](g.cast[dt](), 3)
-            (po + 2).strided_store[width=w](r.cast[dt](), 3)
+            po.unsafe_strided_store[width=w](b.cast[dt](), 3)
+            (po + 1).unsafe_strided_store[width=w](g.cast[dt](), 3)
+            (po + 2).unsafe_strided_store[width=w](r.cast[dt](), 3)
 
 
 def cvt_lab_luv[dt: DType](src: Mat[dt], code: Int) raises -> Mat[dt]:

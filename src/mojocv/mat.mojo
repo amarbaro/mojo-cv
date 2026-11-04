@@ -89,7 +89,7 @@ def load[dt: DType](path: String) raises -> Mat[dt]:
     if len(b) != 16 + n:
         raise Error(String("mojocv: ", path, " has ", len(b) - 16, " data bytes, wanted ", n))
     var m = Mat[dt](rows, cols, ch)
-    var dst = m.ptr().bitcast[UInt8]()
+    var dst = m.ptr().unsafe_bitcast[UInt8]()
     for i in range(n):
         dst[i] = b[16 + i]
     return m^
@@ -107,4 +107,4 @@ def save[dt: DType](m: Mat[dt], path: String) raises:
     h[14] = UInt8(dt_code[dt]())
     with open(path, "w") as f:
         f.write_bytes(Span(h))
-        f.write_bytes(Span(unsafe_ptr=m.ptr().bitcast[UInt8](), length=m.size() * size_of[Scalar[dt]]()))
+        f.write_bytes(Span(unsafe_ptr=m.ptr().unsafe_bitcast[UInt8](), length=m.size() * size_of[Scalar[dt]]()))
