@@ -98,6 +98,8 @@ def par_dyn[F: def(Int) -> None](f: F, n: Int, workers: Int = 8):
 def peek_code(path: String) raises -> Int:
     """The dtype code of an .mcv file, read from its header."""
     var h = open(path, "r").read_bytes(16)
+    if len(h) < 16:
+        raise Error("mojocv: not an MCV1 file (shorter than its 16-byte header): " + path)
     return Int(h[14]) | Int(h[15]) << 8
 
 
@@ -356,6 +358,8 @@ def run_dt[dt: DType](mut a: Args) raises -> Bool:
 def run(mut a: Args) raises -> Bool:
     if not (a.op in ["flip", "rotate", "transpose", "absdiff", "bitwise_and", "bitwise_or", "bitwise_xor", "bitwise_not", "convert"]):
         return False
+    if len(a.ins) < 1:
+        raise Error("mojocv: " + a.op + " needs an input file")
     var code = peek_code(a.ins[0])
     comptime for i in range(len(DTS)):
         if code == i:

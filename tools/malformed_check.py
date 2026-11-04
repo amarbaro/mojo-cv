@@ -30,5 +30,9 @@ def expect_error(label, cmd, timeout=10):
 subprocess.run(["mkdir", "-p", W], check=True)
 # mat.load: a header whose rows*cols*ch wraps Int64 to 0 must not allocate or run
 expect_error("load: 2^31 x 2^31 x 4 header", [".bin/mojo-cv", "flip", f"{W}/o.mcv", put("ovf.mcv", mcv(1 << 31, 1 << 31, 4, 0))])
+# core.peek_code: a file shorter than its 16-byte header, and an op with no input at all
+expect_error("peek_code: empty .mcv", [".bin/mojo-cv", "flip", f"{W}/o.mcv", put("empty.mcv", b"")])
+expect_error("peek_code: 15-byte .mcv", [".bin/mojo-cv", "flip", f"{W}/o.mcv", put("short.mcv", mcv(1, 1, 1, 0)[:15])])
+expect_error("core op without an input", [".bin/mojo-cv", "flip", f"{W}/o.mcv"])
 print("BAD", bad)
 sys.exit(1 if bad else 0)
