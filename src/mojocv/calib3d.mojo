@@ -1280,10 +1280,37 @@ def bt_cost(l: Mat[DType.uint8], r: Mat[DType.uint8], y: Int, x: Int, xr: Int) -
     return min(c1, c2)
 
 
-def stereo_sgm(l: Mat[DType.uint8], r: Mat[DType.uint8], min_d: Int, nd: Int, block: Int, p1: Int, p2: Int, lr_max: Int, uniq: Int) -> Mat[DType.int16]:
+def _sgm_cell(cost: MutPointer[UInt16, MutAnyOrigin], total: MutPointer[Int32, MutAnyOrigin], cur: MutPointer[Int32, MutAnyOrigin],
+              prev: MutPointer[Int32, MutAnyOrigin], base: Int, nd: Int, p1: Int, p2: Int, has_prev: Bool):
+    """One SGM path step at cost[base ..]: cur[d] = C + min(prev[d], prev[d +- 1] + P1, min(prev) + P2) - min(prev),
+    added to total[base ..]. Without a previous pixel the path starts at C."""
+    if not has_prev:
+        for d in range(nd):
+            var c = Int32(cost[unsafe_offset=base + d])
+            cur[unsafe_offset=d] = c
+            total[unsafe_offset=base + d] += c
+        return
+    var mn = prev[unsafe_offset=0]
+    for d in range(1, nd):
+        mn = min(mn, prev[unsafe_offset=d])
+    for d in range(nd):
+        var v = prev[unsafe_offset=d]
+        if d > 0:
+            v = min(v, prev[unsafe_offset=d - 1] + Int32(p1))
+        if d + 1 < nd:
+            v = min(v, prev[unsafe_offset=d + 1] + Int32(p1))
+        v = min(v, mn + Int32(p2))
+        var c = Int32(cost[unsafe_offset=base + d]) + v - mn
+        cur[unsafe_offset=d] = c
+        total[unsafe_offset=base + d] += c
+
+
+def stereo_sgm(l: Mat[DType.uint8], r: Mat[DType.uint8], min_d: Int, nd: Int, block: Int, p1: Int, p2: Int, lr_max: Int, uniq: Int) raises -> Mat[DType.int16]:
     """Semi-global matching (Hirschmuller 2008): BT pixel cost summed over a block x block window, eight path
     directions, winner-takes-all with cv2's parabola refinement, left-right and uniqueness checks. Disparities are
     returned times 16; invalid pixels hold (min_d - 1) * 16, as in cv2.StereoSGBM."""
+    if block * block * 255 > 65535:
+        raise Error("mojocv: StereoSGBM block must be at most 16")
     var h = l.rows
     var w = l.cols
     var min_x = max(min_d + nd, 0)
@@ -1295,75 +1322,81 @@ def stereo_sgm(l: Mat[DType.uint8], r: Mat[DType.uint8], min_d: Int, nd: Int, bl
     if max_x <= min_x:
         return o^
     var cw = max_x - min_x
-    var pc = Mat[DType.int32](h, cw, nd)
+    var pc = Mat[DType.uint16](h, cw, nd)  # BT costs (<= 255), later the block sums (<= block^2 * 255 < 65536)
     var cp = pc.ptr()
+    var total = Mat[DType.int32](h, cw, nd)  # the eight path costs, summed as each path finishes
+    var tp = total.ptr()
 
     def cost_row(y: Int) {imm}:
         for x in range(cw):
             for d in range(nd):
-                cp[unsafe_offset=(y * cw + x) * nd + d] = Int32(bt_cost(l, r, y, x + min_x, x + min_x - min_d - d))
+                cp[unsafe_offset=(y * cw + x) * nd + d] = UInt16(bt_cost(l, r, y, x + min_x, x + min_x - min_d - d))
 
     par(cost_row, h, 16)
     var half = block // 2
-    var agg = Mat[DType.int32](h, cw, nd)
-    var ap = agg.ptr()
+    var rown = cw * nd
 
-    def win_row(y: Int) {imm}:
+    def sum_x(y: Int) {imm}:  # block sum, pass 1: along x, edge pixels repeated, in place through a row copy
+        var row = List[UInt16](length=rown, fill=0)
+        for i in range(rown):
+            row[i] = cp[unsafe_offset=y * rown + i]
         for x in range(cw):
             for d in range(nd):
                 var acc = Int32(0)
-                for dy in range(-half, half + 1):
-                    var yy = min(max(y + dy, 0), h - 1)
-                    for dx in range(-half, half + 1):
-                        var xx = min(max(x + dx, 0), cw - 1)
-                        acc += cp[unsafe_offset=(yy * cw + xx) * nd + d]
-                ap[unsafe_offset=(y * cw + x) * nd + d] = acc
+                for dx in range(-half, half + 1):
+                    acc += Int32(row[min(max(x + dx, 0), cw - 1) * nd + d])
+                cp[unsafe_offset=y * rown + x * nd + d] = UInt16(acc)
+
+    def sum_y(y: Int) {imm}:  # pass 2: along y, into `total`, which is still empty
+        for i in range(rown):
+            var acc = Int32(0)
+            for dy in range(-half, half + 1):
+                acc += Int32(cp[unsafe_offset=min(max(y + dy, 0), h - 1) * rown + i])
+            tp[unsafe_offset=y * rown + i] = acc
+
+    def back(y: Int) {imm}:
+        for i in range(rown):
+            cp[unsafe_offset=y * rown + i] = UInt16(tp[unsafe_offset=y * rown + i])
+            tp[unsafe_offset=y * rown + i] = 0
 
     if block > 1:
-        par(win_row, h, 16)
-        cp = ap
-    var total = Mat[DType.int32](h, cw, nd)
-    var tp = total.ptr()
+        par(sum_x, h, 16)
+        par(sum_y, h, 16)
+        par(back, h, 16)
     var dirs_x = SIMD[DType.int32, 8](1, -1, 0, 0, 1, -1, 1, -1)
     var dirs_y = SIMD[DType.int32, 8](0, 0, 1, -1, 1, 1, -1, -1)
-    var parts = List[Mat[DType.int32]]()
-    for _ in range(8):
-        parts.append(Mat[DType.int32](h, cw, nd))
+    # A path needs only its previous row (dy != 0) or previous pixel (dy == 0): two rolling rows, no per-path volume.
+    var st = List[Int](length=3, fill=0)  # path k, row y, row step
+    var sp = MutPointer[Int, MutAnyOrigin](unsafe_from_address=Int(st.unsafe_ptr()))
+    var bufs = List[Int32](length=2 * rown, fill=0)
+    var bp = MutPointer[Int32, MutAnyOrigin](unsafe_from_address=Int(bufs.unsafe_ptr()))
+    var pix = List[Int32](length=2 * nd * h, fill=0)  # per-row ping-pong pixels for the horizontal paths
+    var xp = MutPointer[Int32, MutAnyOrigin](unsafe_from_address=Int(pix.unsafe_ptr()))
 
-    def path(k: Int) {imm}:
-        var dx = Int(dirs_x[k])
-        var dy = Int(dirs_y[k])
-        var lr = parts[k].ptr()
-        for yi in range(h):
-            var y = yi if dy >= 0 else h - 1 - yi
-            for xi in range(cw):
-                var x = xi if dx >= 0 else cw - 1 - xi
-                var px = x - dx
-                var py = y - dy
-                var base = (y * cw + x) * nd
-                if px < 0 or px >= cw or py < 0 or py >= h:
-                    for d in range(nd):
-                        lr[unsafe_offset=base + d] = cp[unsafe_offset=base + d]
-                    continue
-                var pb = (py * cw + px) * nd
-                var mn = lr[unsafe_offset=pb]
-                for d in range(1, nd):
-                    mn = min(mn, lr[unsafe_offset=pb + d])
-                for d in range(nd):
-                    var v = lr[unsafe_offset=pb + d]
-                    if d > 0:
-                        v = min(v, lr[unsafe_offset=pb + d - 1] + Int32(p1))
-                    if d + 1 < nd:
-                        v = min(v, lr[unsafe_offset=pb + d + 1] + Int32(p1))
-                    v = min(v, mn + Int32(p2))
-                    lr[unsafe_offset=base + d] = cp[unsafe_offset=base + d] + v - mn
+    def hrow(y: Int) {imm}:  # k = 0, 1: left-to-right and right-to-left along row y
+        var dx = Int(dirs_x[sp[0]])
+        for xi in range(cw):
+            var x = xi if dx > 0 else cw - 1 - xi
+            _sgm_cell(cp, tp, xp + y * 2 * nd + (xi & 1) * nd, xp + y * 2 * nd + ((xi + 1) & 1) * nd, (y * cw + x) * nd, nd, p1, p2, xi > 0)
 
-    par(path, 8, 16)
+    def vcell(x: Int) {imm}:  # k = 2..7 on row sp[1]: previous row is the one processed just before
+        var k = sp[0]
+        var y = sp[1]
+        var par_row = sp[2] & 1
+        var px = x - Int(dirs_x[k])
+        _sgm_cell(cp, tp, bp + par_row * rown + x * nd, bp + (1 - par_row) * rown + px * nd, (y * cw + x) * nd, nd, p1, p2,
+                  sp[2] > 0 and px >= 0 and px < cw)
+
     for k in range(8):
-        var pk = parts[k].ptr()
-        for i in range(h * cw * nd):
-            tp[unsafe_offset=i] += pk[unsafe_offset=i]
-    _ = (len(parts), pc.rows, agg.rows)
+        sp[0] = k
+        if dirs_y[k] == 0:
+            par(hrow, h, 16)
+            continue
+        for yi in range(h):
+            sp[1] = yi if dirs_y[k] > 0 else h - 1 - yi
+            sp[2] = yi
+            par(vcell, cw, 8)
+    _ = (pc.rows, len(bufs), len(pix), len(st))
     var d2 = List[Int](length=h * cw, fill=-1)
     var m2 = List[Int](length=h * cw, fill=1 << 30)
     var dl = List[Int](length=h * cw, fill=-1)
@@ -1405,6 +1438,7 @@ def stereo_sgm(l: Mat[DType.uint8], r: Mat[DType.uint8], min_d: Int, nd: Int, bl
                 var den = max(pp + nn - 2 * cc, 1)
                 v += ((pp - nn) * 16 + den) // (den * 2)
             o.set(y, x + min_x, 0, Int16(v))
+    _ = total.rows
     return o^
 
 
