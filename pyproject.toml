@@ -1,6 +1,6 @@
 [project]
 name = "mojo-cv"
-version = "0.1.1"
+version = "0.1.2"
 description = "Computer vision for Mojo: OpenCV-style 2D ops, calibration, 3D geometry and CAD export, each checked against cv2 5.0 or an exact oracle"
 license = "Apache-2.0"
 requires-python = ">=3.11,<3.15"
