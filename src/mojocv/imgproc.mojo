@@ -1332,15 +1332,47 @@ def _half_rows[dt: DType, ch: Int](pa: Ptr[Scalar[dt]], po: Ptr[Scalar[dt]], dw:
                 o[unsafe_offset=q * ch + k] = Scalar[dt]((UInt16(a[unsafe_offset=i]) + UInt16(a[unsafe_offset=i + ch]) + UInt16(b[unsafe_offset=i]) + UInt16(b[unsafe_offset=i + ch]) + 2) >> 2)
 
 
+def _fx_taps(ssize: Int, dsize: Int, zero_ends: Bool, mut idx: List[Int], mut w: List[Float32]):
+    """cv2's uint8 INTER_LINEAR taps: float32 source position, 11-bit weights (kept as whole-number float32s: a
+    255 * 2048 tap sum is exact in float32). Columns (`zero_ends`) off either end take weight (2048, 0); rows only
+    clamp the tap index and keep the fraction, so an upscaled first or last row still blends."""
+    var scale = Float64(ssize) / Float64(dsize)
+    idx = List[Int](length=dsize * 2, fill=0)
+    w = List[Float32](length=dsize * 2, fill=0)
+    for d in range(dsize):
+        var f = Float32((Float64(d) + 0.5) * scale - 0.5)
+        var s = Int(f.__floor__())
+        f -= Float32(s)
+        if zero_ends and (s < 0 or s >= ssize - 1):
+            s = min(max(s, 0), ssize - 1)
+            f = 0
+        idx[2 * d] = min(max(s, 0), ssize - 1)
+        idx[2 * d + 1] = min(max(s + 1, 0), ssize - 1)
+        w[2 * d] = Float32(rint(Float64((Float32(1) - f) * 2048)))
+        w[2 * d + 1] = Float32(rint(Float64(f * 2048)))
+
+
+def _vfx[dt: DType](a: Ptr[Float32], c: Ptr[Float32], at: Int, wy0: SIMD[DType.int32, WF], wy1: SIMD[DType.int32, WF]) -> SIMD[dt, WF]:
+    """cv2's fixed-point vertical blend of two horizontal-pass rows: ((b0 * (s0 >> 4)) >> 16) + ((b1 * (s1 >> 4)) >> 16) + 2) >> 2."""
+    var s0 = a.unsafe_load[width=WF](at).cast[DType.int32]() >> 4
+    var s1 = c.unsafe_load[width=WF](at).cast[DType.int32]() >> 4
+    return ((((wy0 * s0) >> 16) + ((wy1 * s1) >> 16) + 2) >> 2).clamp(0, 255).cast[dt]()
+
+
 def _resize_lin_u8[dt: DType, ch: Int](src: Mat[dt], dw: Int, dh: Int) -> Mat[dt]:
-    """uint8 bilinear resize, ch 1 or 3, any ratio. Horizontal pass first, once per source row (a two-slot cache per
+    """uint8 bilinear resize, ch 1, 3 or 4, any ratio, bit exact with cv2's fixed point (11-bit weights, see _fx_taps and
+    _vfx). Horizontal pass first, once per source row (a two-slot cache per
     worker: output rows ask for source rows y0 and y1, and the next output row mostly re-asks one of them): one
-    8-byte (ch 3) or 4-byte (ch 1) gather per output pixel holds both taps of all channels, the row lands in a float32
+    8-byte (ch 3, 4) or 4-byte (ch 1) gather per output pixel holds both taps of all channels, the row lands in a float32
     buffer laid out in blocks of WF pixels per channel. Vertical blend of two such rows, then the channels are
     interleaved by one shuffle and stored. The source row that ends the image is copied to a padded scratch first, so
     the wide gathers never read past the buffer."""
-    var tx = Taps(src.cols, dw, Float64(src.cols) / Float64(dw), 1)
-    var ty = Taps(src.rows, dh, Float64(src.rows) / Float64(dh), 1)
+    var txi = List[Int]()
+    var txw = List[Float32]()
+    var tyi = List[Int]()
+    var tyw = List[Float32]()
+    _fx_taps(src.cols, dw, True, txi, txw)
+    _fx_taps(src.rows, dh, False, tyi, tyw)
     var nb = (dw + WF - 1) // WF
     var o = Mat[dt](dh, dw, ch, False)
     var cols = src.cols
@@ -1354,16 +1386,16 @@ def _resize_lin_u8[dt: DType, ch: Int](src: Mat[dt], dw: Int, dh: Int) -> Mat[dt
     var cw1 = List[Float32](length=nb * WF, fill=0)
     for d in range(nb * WF):
         var q = min(d, dw - 1)
-        var i0 = tx.idx[q * 2]
-        var i1 = tx.idx[q * 2 + 1]
+        var i0 = txi[q * 2]
+        var i1 = txi[q * 2 + 1]
         off[d] = i0 * ch
-        cw0[d] = tx.w[q * 2] + (tx.w[q * 2 + 1] if i1 == i0 else 0)
-        cw1[d] = tx.w[q * 2 + 1] if i1 != i0 else 0
+        cw0[d] = txw[q * 2] + (txw[q * 2 + 1] if i1 == i0 else 0)
+        cw1[d] = txw[q * 2 + 1] if i1 != i0 else 0
     var poff = ptr_of(off)
     var pw0 = ptr_of(cw0)
     var pw1 = ptr_of(cw1)
-    var pyi = ptr_of(ty.idx)
-    var pyw = ptr_of(ty.w)
+    var pyi = ptr_of(tyi)
+    var pyw = ptr_of(tyw)
     var rn = cols * ch
     comptime NT = 8
 
@@ -1392,6 +1424,12 @@ def _resize_lin_u8[dt: DType, ch: Int](src: Mat[dt], dw: Int, dh: Int) -> Mat[dt
                     comptime for k in range(3):
                         var p = _ab3[k](wd[0], wd[1])
                         dst.unsafe_store((b * 3 + k) * WF, w0 * p[0] + w1 * p[1])
+                elif ch == 4:
+                    var all_ = SIMD[DType.bool, WF](fill=True)
+                    var lo = gather[alignment=1](a, all_, SIMD[DType.uint32, WF](0))
+                    var hi = gather[alignment=1](a + 4, all_, SIMD[DType.uint32, WF](0))
+                    comptime for k in range(4):
+                        dst.unsafe_store((b * 4 + k) * WF, w0 * ((lo >> UInt32(8 * k)) & 255).cast[F32]() + w1 * ((hi >> UInt32(8 * k)) & 255).cast[F32]())
                 else:
                     var wd = gather[alignment=1](a, SIMD[DType.bool, WF](fill=True), SIMD[DType.uint32, WF](0))
                     dst.unsafe_store(b * WF, w0 * (wd & 255).cast[F32]() + w1 * ((wd >> 8) & 255).cast[F32]())
@@ -1415,23 +1453,22 @@ def _resize_lin_u8[dt: DType, ch: Int](src: Mat[dt], dw: Int, dh: Int) -> Mat[dt
                     id0 = y1
             var a = h0 if id0 == y0 else h1
             var c = h0 if id0 == y1 else h1
-            var wy0 = SIMD[F32, WF](pyw[unsafe_offset=r * 2])
-            var wy1 = SIMD[F32, WF](pyw[unsafe_offset=r * 2 + 1])
+            var wy0 = SIMD[DType.int32, WF](Int32(pyw[unsafe_offset=r * 2]))
+            var wy1 = SIMD[DType.int32, WF](Int32(pyw[unsafe_offset=r * 2 + 1]))
             var dst = po + r * dw * ch
             for b in range(nb):
                 var valid = min(WF, dw - b * WF)
-                comptime if ch == 3:
+                comptime if ch == 3 or ch == 4:
                     var res = SIMD[dt, 4 * WF](0)
-                    comptime for k in range(3):
-                        var v = wy0 * a.unsafe_load[width=WF]((b * 3 + k) * WF) + wy1 * c.unsafe_load[width=WF]((b * 3 + k) * WF)
-                        res = res.insert[offset = k * WF](_fin[dt, WF](v))
-                    if b * WF + WF + 6 <= dw:
-                        (dst + b * WF * 3).unsafe_store(0, res.shuffle[_ilv_mask[3]()]())
+                    comptime for k in range(ch):
+                        res = res.insert[offset = k * WF](_vfx[dt](a, c, (b * ch + k) * WF, wy0, wy1))
+                    if b * WF + WF + (6 if ch == 3 else 0) <= dw:
+                        (dst + b * WF * ch).unsafe_store(0, res.shuffle[_ilv_mask[ch]()]())
                     else:
-                        comptime for k in range(3):
-                            (dst + b * WF * 3 + k).unsafe_scatter(SIMD[DType.int32, WF](0, 3, 6, 9, 12, 15, 18, 21, 24, 27, 30, 33, 36, 39, 42, 45), res.slice[WF, offset = k * WF](), SIMD[DType.int32, WF](0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15).lt(SIMD[DType.int32, WF](valid)))
+                        comptime for k in range(ch):
+                            (dst + b * WF * ch + k).unsafe_scatter(SIMD[DType.int32, WF](0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15) * SIMD[DType.int32, WF](ch), res.slice[WF, offset = k * WF](), SIMD[DType.int32, WF](0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15).lt(SIMD[DType.int32, WF](valid)))
                 else:
-                    var v = _fin[dt, WF](wy0 * a.unsafe_load[width=WF](b * WF) + wy1 * c.unsafe_load[width=WF](b * WF))
+                    var v = _vfx[dt](a, c, b * WF, wy0, wy1)
                     if valid == WF:
                         (dst + b * WF).unsafe_store(0, v)
                     else:
@@ -1440,12 +1477,13 @@ def _resize_lin_u8[dt: DType, ch: Int](src: Mat[dt], dw: Int, dh: Int) -> Mat[dt
         _ = (len(hb0), len(hb1), len(last))
 
     par(task, NT)
-    _ = (len(off), len(cw0), len(cw1), len(ty.idx), len(ty.w), len(tx.idx), len(tx.w))
+    _ = (len(off), len(cw0), len(cw1), len(tyi), len(tyw), len(txi), len(txw))
     return o^
 
 
-def resize[dt: DType](src: Mat[dt], dw_in: Int, dh_in: Int, kind_in: Int) -> Mat[dt]:
-    """Column taps first, on contiguous SIMD over the source width into one cached row per output row; then the row
+def resize[dt: DType](src: Mat[dt], dw_in: Int, dh_in: Int, kind_in: Int, fixed: Bool = True) -> Mat[dt]:
+    """`fixed` False keeps uint8 linear on the float path (HOG's pyramid is cv2's INTER_LINEAR_EXACT, whose rounding the
+    fixed-point INTER_LINEAR of _resize_lin_u8 does not match). Column taps first, on contiguous SIMD over the source width into one cached row per output row; then the row
     taps pick (dw) pixels from that row."""
     var dw = dw_in
     var dh = dh_in
@@ -1469,9 +1507,11 @@ def resize[dt: DType](src: Mat[dt], dw_in: Int, dh_in: Int, kind_in: Int) -> Mat
             _ = len(src.data)
             return o^
     comptime if dt == DType.uint8:
-        if kind == 1 and src.cols >= 2 and src.rows >= 2:
+        if fixed and kind == 1 and src.cols >= 2 and src.rows >= 2:
             if src.ch == 3:
                 return _resize_lin_u8[dt, 3](src, dw, dh)
+            elif src.ch == 4:
+                return _resize_lin_u8[dt, 4](src, dw, dh)
             elif src.ch == 1:
                 return _resize_lin_u8[dt, 1](src, dw, dh)
     var tx = Taps(src.cols, dw, Float64(src.cols) / Float64(dw), kind)
@@ -2524,6 +2564,7 @@ def _line2[dt: DType](mut m: Mat[dt], px1: Int, py1: Int, px2: Int, py2: Int, co
         x_step = _tdiv(dx << XY_SHIFT, ay | 1)
         y_step = XY_ONE
         ecount = (y2 - y1) >> XY_SHIFT
+    _put(m, (x2 + (XY_ONE >> 1)) >> XY_SHIFT, (y2 + (XY_ONE >> 1)) >> XY_SHIFT, color)  # cv2 plots pt2 (after the swap) first
     x1 += XY_ONE >> 1
     y1 += XY_ONE >> 1
     while ecount >= 0:
@@ -2976,7 +3017,7 @@ def hog_detect(src: Mat[DType.uint8], svm: Mat[F32], hit: Float32, scale0: Float
         var h = rint(Float64(src.rows) / s)
         if w < 64 or h < 128:
             continue
-        var lvl = Mat[DType.uint8](copy=src) if (w == src.cols and h == src.rows) else resize(src, w, h, 1)
+        var lvl = Mat[DType.uint8](copy=src) if (w == src.cols and h == src.rows) else resize(src, w, h, 1, False)
         var sc_ = hog_scores(hog_blocks(lvl), svm)
         for wy in range(sc_.rows):
             for wx in range(sc_.cols):

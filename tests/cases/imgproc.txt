@@ -64,15 +64,15 @@ cvt_luv_f32      cvtColor f32 code=bgr2luv => max:0.01
 cvt_luv2bgr_sm   cvtColor sm_luv code=luv2bgr => max:2
 cvt_luv2bgr_f32  cvtColor sm_luv_f code=luv2bgr => frac:0.001:0.9999
 cvt_lab2bgr_f32  cvtColor sm_lab_f code=lab2bgr => max:0.001
-resize_down_lin_hd resize hd w=960 h=540 interp=1 => max:1
-resize_up_lin_sm   resize sm w=913 h=401 interp=1 => max:1
+resize_down_lin_hd resize hd w=960 h=540 interp=1 => exact
+resize_up_lin_sm   resize sm w=913 h=401 interp=1 => exact
 resize_nn_hd       resize hd w=640 h=360 interp=0 => exact
 resize_nn_odd      resize odd w=29 h=17 interp=0 => exact
 resize_cub_sm      resize sm w=700 h=333 interp=2 => max:2
 resize_cub_hdg     resize hdg w=800 h=450 interp=2 => max:2
 resize_lan_sm      resize sm w=300 h=151 interp=3 => max:2
 resize_lan_hdg     resize hdg w=2500 h=1300 interp=3 => max:2
-resize_lin_one     resize one w=5 h=3 interp=1 => max:1
+resize_lin_one     resize one w=5 h=3 interp=1 => exact
 resize_lin_f32     resize f32 w=40 h=20 interp=1 => max:0.01
 resize_half_g       resize smg w=240 h=135 interp=1 => max:1
 resize_half_c       resize sm w=240 h=135 interp=1 => max:1

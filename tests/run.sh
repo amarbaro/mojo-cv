@@ -7,7 +7,7 @@ cd "$(dirname "$0")/.."
 PY=${MCV_PY:-.venv/bin/python}
 mkdir -p .bin .work tests/fixtures
 if [ ! -x .bin/mojo-cv ] || [ -n "$(find src -newer .bin/mojo-cv -name '*.mojo' | head -1)" ]; then
-  .venv/bin/mojo build -O3 -I src src/main.mojo -o .bin/mojo-cv 2>.work/build.log || { tail -30 .work/build.log; echo "FAIL build: see .work/build.log"; exit 1; }
+  "${MOJO:-.venv/bin/mojo}" build -O3 -I src src/main.mojo -o .bin/mojo-cv 2>.work/build.log || { tail -30 .work/build.log; echo "FAIL build: see .work/build.log"; exit 1; }
 fi
 [ tests/fixtures/.made -nt tools/oracle_cv2.py ] || { "$PY" -I tools/oracle_cv2.py --fixtures tests/fixtures && touch tests/fixtures/.made; } || { echo "FAIL fixtures"; exit 1; }
 flags=(); cases=()
