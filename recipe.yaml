@@ -21,7 +21,7 @@ requirements:
   build:
     - max =26.7.0
   run:
-    - ${{ pin_compatible('max') }}
+    - ${{ pin_compatible('max', upper_bound='x.x') }}  # .mojoc loads only on the minor it was built with
 
 tests:
   - script:
