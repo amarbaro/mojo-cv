@@ -11,6 +11,9 @@ GLB and STEP export). Every op is run row by row against an oracle on the same i
 brute force or a closed form for the 3D ones: 258 and 161 rows, all passing in `scripts/ci.sh`. It is a library and a command-line
 tool, not a cv2 replacement: there is no Python binding and no GPU code.
 
+Install: `pixi workspace channel add https://conda.modular.com/max https://prefix.dev/amarbaro/amarbaro`, then `pixi add mojo-cv` (import `mojocv`). From source: `git clone https://github.com/amarbaro/mojo-cv`, then `mojo run -I mojo-cv/src app.mojo`.
+Toolchains: Mojo 1.2 stable, and the nightly 1.3.0.dev2026110805 in the weekly [mojo-libs](https://github.com/amarbaro/mojo-libs) matrix (36 libraries on stable, 35 on nightly).
+
 ```mojo
 from mojocv.mat import Mat
 from mojocv.imgproc import gaussian_blur, otsu, threshold
