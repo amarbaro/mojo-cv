@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # img2mcv.sh IN OUT.mcv [gray|bgr]: decode any image ImageMagick reads (JPEG, PNG, ...) into MCV1 uint8,
-# EXIF orientation applied; an embedded non-sRGB profile (Display P3) is converted to sRGB. Header: "MCV1", u32 rows, u32 cols, u16 ch, u16 dtype 0 (uint8), little-endian.
+# IMG2MCV_EXTRA="<magick ops>" applies extra ops after conversion (robustness tests). EXIF orientation applied; an embedded non-sRGB profile (Display P3) is converted to sRGB. Header: "MCV1", u32 rows, u32 cols, u16 ch, u16 dtype 0 (uint8), little-endian.
 set -euo pipefail
 [ $# -ge 2 ] || { echo "FAIL usage: img2mcv.sh IN OUT.mcv [gray|bgr]" >&2; exit 2; }
 in=$1 out=$2 mode=${3:-gray}
@@ -15,5 +15,5 @@ if [ -n "$desc" ] && ! printf '%s' "$desc" | grep -qi 'srgb'; then [ -f "$SRGB" 
  [ -n "${h:-}" ] || { echo "FAIL decode: $in" >&2; exit 1; }
 le32() { printf "\\x$(printf %02x $(($1 & 255)))\\x$(printf %02x $(($1 >> 8 & 255)))\\x$(printf %02x $(($1 >> 16 & 255)))\\x$(printf %02x $(($1 >> 24 & 255)))"; }
 { printf 'MCV1'; le32 "$h"; le32 "$w"; printf "\\x$(printf %02x $ch)\\x00\\x00\\x00"
-  magick "$in" -auto-orient "${icc[@]}" "${cs[@]}" -depth 8 "$fmt:-" 2>/dev/null || true; } > "$out"
+  magick "$in" -auto-orient "${icc[@]}" "${cs[@]}" ${IMG2MCV_EXTRA:-} -depth 8 "$fmt:-" 2>/dev/null || true; } > "$out"
 [ "$(stat -c %s "$out")" -eq $((16 + w * h * ch)) ] || { echo "FAIL size: $out" >&2; exit 1; }
