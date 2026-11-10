@@ -432,6 +432,17 @@ def run(mut a: Args) raises -> Bool:
             return _run_dt[DType.float32](a)
         return _run_dt[DType.uint8](a)
     var m = load[DType.uint8](a.ins[0])
+    # grey-only ops: refuse inputs that would give a plausible wrong number instead of an error
+    if m.ch != 1:
+        raise Error(a.op + " needs a 1-channel grey image, got " + String(m.ch) + " channels")
+    if a.op == "autocorr":
+        for v in a.fl("lags", [1.0, 2.0, 4.0, 8.0]):
+            if Int(v) < 1 or Int(v) >= min(m.rows, m.cols):
+                raise Error("autocorr lag " + String(Int(v)) + " outside 1.." + String(min(m.rows, m.cols) - 1))
+    if a.op == "waveletEnergy" and (m.rows >> a.i("levels", 5)) < 1 or (a.op == "waveletEnergy" and (m.cols >> a.i("levels", 5)) < 1):
+        raise Error("waveletEnergy: image too small for " + String(a.i("levels", 5)) + " levels")
+    if (a.op == "smoothFraction" and (m.rows < a.i("tile", 16) or m.cols < a.i("tile", 16))) or (a.op == "sharpMap" and (m.rows < max(2, a.i("tile", 64)) or m.cols < max(2, a.i("tile", 64)))):
+        raise Error(a.op + ": image smaller than one tile")
     var o = Mat[F64](0, 0)
     while a.again():
         if a.op == "glcm":
