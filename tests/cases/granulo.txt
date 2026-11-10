@@ -8,3 +8,21 @@ lbp_smg          lbpHist smg => max:1e-12
 lbp_hdg          lbpHist hdg => max:1e-12
 rmm_down_hdg     resizeMmpx hdg mmpx_in=0.05 mmpx_out=0.22 => max:1
 rmm_up_smg       resizeMmpx smg mmpx_in=0.2 mmpx_out=0.1 => exact
+gmm_hdg          granulometryMm hdg ppm=20 => max:1e-9
+gmm_smg          granulometryMm smg ppm=5 => max:1e-9
+tophat_hdg       tophat hdg ksize=15 => exact
+tophat_smg       tophat smg ksize=31 => exact
+smooth_hdg       smoothFraction hdg tile=16 thr=20 => max:1e-12
+smooth_smg       smoothFraction smg tile=8 thr=50 => max:1e-12
+sharp_hdg        sharpMap hdg tile=64 => max:1e-6
+sharp_smg        sharpMap smg tile=32 => max:1e-6
+acorr_hdg        autocorr hdg lags=1,2,4,8,16 => max:1e-9
+acorr_smg        autocorr smg lags=1,3,9 => max:1e-9
+wav_hdg          waveletEnergy hdg levels=6 => max:1e-9
+wav_smg          waveletEnergy smg levels=4 => max:1e-9
+rim_hdg          trayRim hdg => exact
+rim_binhd        trayRim binhd => exact
+grec_smg         granulometryRec smg radii=0,1,3,6 => max:0
+grec_bin         granulometryRec binhd radii=2,5 => max:0
+gmm_hdg_big      granulometryMm hdg ppm=40 => max:1e-9
+rim_syn          trayRim rimsyn => exact

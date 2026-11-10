@@ -416,6 +416,89 @@ def resizeMmpx(i, kv):
     return cv2.resize(i[0], (max(1, int(w * f + 0.5)), max(1, int(h * f + 0.5))), interpolation=cv2.INTER_AREA if f < 1 else cv2.INTER_LINEAR)
 
 
+SIEVES = [0.002, 0.0063, 0.02, 0.063, 0.2, 0.63, 2.0, 6.3, 20.0, 63.0, 200.0]
+def _open_sum(g, r):
+    if r <= 0:
+        return float(g.astype(np.float64).sum())
+    se = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (2 * r + 1, 2 * r + 1))
+    return float(cv2.morphologyEx(g, cv2.MORPH_OPEN, se).astype(np.float64).sum())
+@op()
+def granulometryMm(i, kv):
+    ppm, g = kv_f(kv, "ppm", 1.0), i[0]; out = []
+    for d in SIEVES:
+        r = int(d * ppm / 2 + 0.5)
+        if r < 1: out.append(-1.0); continue
+        if 2 * r + 1 > min(g.shape[:2]) // 2: out.append(-2.0); continue
+        se = np.ones((2 * r + 1, 2 * r + 1), np.uint8)
+        out.append(100.0 * (1 - cv2.morphologyEx(g, cv2.MORPH_OPEN, se).astype(np.float64).mean() / g.astype(np.float64).mean()))
+    return np.array([out])
+@op()
+def tophat(i, kv):
+    k = kv_i(kv, "ksize", 15)
+    return cv2.morphologyEx(i[0], cv2.MORPH_TOPHAT, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (k, k)))
+def _tile_var(v, t):
+    h, w = v.shape[0] // t, v.shape[1] // t
+    b = v[:h * t, :w * t].reshape(h, t, w, t).astype(np.float64)
+    return (b * b).mean(axis=(1, 3)) - b.mean(axis=(1, 3)) ** 2
+@op()
+def smoothFraction(i, kv):
+    m = _tile_var(i[0], kv_i(kv, "tile", 16))
+    return np.array([[float((m < kv_f(kv, "thr", 4.0)).mean())]])
+@op()
+def sharpMap(i, kv):
+    return _tile_var(cv2.Laplacian(i[0], cv2.CV_64F, ksize=1), kv_i(kv, "tile", 64))
+@op()
+def autocorr(i, kv):
+    g = i[0].astype(np.float64); out = []
+    for L in [int(x) for x in kv.get("lags", "1,2,4,8").split(",")]:
+        rs = [np.corrcoef(g[:, :g.shape[1] - L].ravel(), g[:, L:].ravel())[0, 1], np.corrcoef(g[:g.shape[0] - L].ravel(), g[L:].ravel())[0, 1]]
+        out.append(sum(rs) / 2)
+    return np.array([out])
+@op()
+def waveletEnergy(i, kv):
+    n = kv_i(kv, "levels", 5); g = i[0].astype(np.float64)
+    a = g[:(g.shape[0] >> n) << n, :(g.shape[1] >> n) << n]; e = []
+    for _ in range(n):
+        p00, p01, p10, p11 = a[0::2, 0::2], a[0::2, 1::2], a[1::2, 0::2], a[1::2, 1::2]
+        e.append((((p00 - p01 + p10 - p11) / 2) ** 2 + ((p00 + p01 - p10 - p11) / 2) ** 2 + ((p00 - p01 - p10 + p11) / 2) ** 2).sum())
+        a = (p00 + p01 + p10 + p11) / 2
+    e = np.array(e); return (e / e.sum())[None, :]
+def _rim(v):
+    n = len(v); m = np.sort(v[n // 4:3 * n // 4 + 1])[len(v[n // 4:3 * n // 4 + 1]) // 2]
+    lo, hi, run = 0.55 * m, 0.75 * m, max(3, n // 333)
+    i = 0
+    while i < n and v[i] < lo: i += 1
+    a = -1
+    if i >= run:
+        while i < n and v[i] < hi: i += 1
+        a = i
+    j = n - 1
+    while j >= 0 and v[j] < lo: j -= 1
+    b = -1
+    if n - 1 - j >= run:
+        while j >= 0 and v[j] < hi: j -= 1
+        b = j
+    return a, b
+@op()
+def trayRim(i, kv):
+    g = i[0].astype(np.float64); l, r = _rim(g.sum(axis=0)); t, b = _rim(g.sum(axis=1))
+    return np.array([[l, r, t, b, r - l if l >= 0 and r >= 0 else -1, b - t if t >= 0 and b >= 0 else -1]], np.float64)
+def _reconstruct(marker, mask):
+    k = np.ones((3, 3), np.uint8); j = marker.copy()
+    while True:
+        n = np.minimum(cv2.dilate(j, k), mask)
+        if np.array_equal(n, j): return j
+        j = n
+@op()
+def granulometryRec(i, kv):
+    out = []
+    for r in [int(x) for x in kv.get("radii", "1,2,4,8").split(",")]:
+        if r <= 0: out.append(float(i[0].astype(np.float64).sum())); continue
+        se = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (2 * r + 1, 2 * r + 1))
+        out.append(float(_reconstruct(cv2.erode(i[0], se), i[0]).astype(np.float64).sum()))
+    return np.array([out])
+
+
 # ---- fixtures ---------------------------------------------------------------------------------------------
 def scene(seed, h=1080, w=1920):
     """A deterministic 1080p test picture with the statistics the ops care about: flat panels with sharp edges, a
@@ -471,6 +554,8 @@ def make_fixtures(d):
     fx["sm_lab_f"], fx["sm_luv_f"] = cv2.cvtColor(smf, cv2.COLOR_BGR2Lab), cv2.cvtColor(smf, cv2.COLOR_BGR2Luv)
     fx["bin"] = (fx["smg"] < 128).astype(np.uint8) * 255
     fx["binhd"] = (fx["hdg"] < 128).astype(np.uint8) * 255
+    rim = np.full((400, 600), 150, np.uint8); rim[:, :24] = 30; rim[:, -18:] = 35; rim[:12, :] = 25
+    fx["rimsyn"] = cv2.add(rim, (np.indices(rim.shape).sum(0) % 7).astype(np.uint8))  # dark tray rim on 3 sides
     shapes = np.zeros((60, 80), np.uint8)
     cv2.rectangle(shapes, (5, 5), (30, 30), 255, -1)
     cv2.rectangle(shapes, (12, 12), (22, 22), 0, -1)

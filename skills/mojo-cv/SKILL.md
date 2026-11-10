@@ -1,11 +1,11 @@
 ---
 name: mojo-cv
-description: "OpenCV-style image processing, features, calibration and 3D/CAD helpers in Mojo, checked against cv2 5.0. Use when Mojo code must blur, threshold, resize, measure grain size (granulometry, GLCM, LBP), warp, find contours or corners, match ORB features, track optical flow, solve PnP or write GLB/STEP, or when a Mojo op must agree with cv2 on the same input."
+description: "OpenCV-style image processing, features, calibration and 3D/CAD helpers in Mojo, checked against cv2 5.0. Use when Mojo code must blur, threshold, resize, measure grain size (sieve-shaped granulometry, reconstruction, autocorrelation, wavelet energy, GLCM, LBP, smooth and sharp maps, tray rim), warp, find contours or corners, match ORB features, track optical flow, solve PnP or write GLB/STEP, or when a Mojo op must agree with cv2 on the same input."
 ---
 
 # mojo-cv
 
-CPU computer vision for Mojo, with cv2 5.0 as the oracle. 267 2D rows and 161 3D rows run in `scripts/ci.sh`.
+CPU computer vision for Mojo, with cv2 5.0 as the oracle. 285 2D rows and 161 3D rows run in `scripts/ci.sh`.
 
 ## Install
 
