@@ -5,7 +5,7 @@ description: "OpenCV-style image processing, features, calibration and 3D/CAD he
 
 # mojo-cv
 
-CPU computer vision for Mojo, with cv2 5.0 as the oracle. 285 2D rows and 161 3D rows run in `scripts/ci.sh`.
+CPU computer vision for Mojo, with cv2 5.0 as the oracle. 287 2D rows and 161 3D rows run in `scripts/ci.sh`.
 
 ## Install
 

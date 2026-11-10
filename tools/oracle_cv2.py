@@ -483,6 +483,14 @@ def _rim(v):
 def trayRim(i, kv):
     g = i[0].astype(np.float64); l, r = _rim(g.sum(axis=0)); t, b = _rim(g.sum(axis=1))
     return np.array([[l, r, t, b, r - l if l >= 0 and r >= 0 else -1, b - t if t >= 0 and b >= 0 else -1]], np.float64)
+@op()
+def trayCrop(i, kv):
+    g, m = i[0], kv_i(kv, "margin", 8)
+    gg = g if g.ndim == 2 else np.rint(g.astype(np.float64).mean(axis=2)).astype(np.uint8)
+    l, r, t, b, _, _ = trayRim([gg], kv)[0].astype(int)
+    x0 = l + m if l >= 0 else 0; x1 = r - m if r >= 0 else g.shape[1] - 1
+    y0 = t + m if t >= 0 else 0; y1 = b - m if b >= 0 else g.shape[0] - 1
+    return g.copy() if x1 <= x0 or y1 <= y0 else g[y0:y1 + 1, x0:x1 + 1].copy()
 def _reconstruct(marker, mask):
     k = np.ones((3, 3), np.uint8); j = marker.copy()
     while True:

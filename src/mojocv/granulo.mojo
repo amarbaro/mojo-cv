@@ -321,6 +321,30 @@ def tray_rim(src: Mat[DType.uint8]) -> Mat[F64]:
     return o^
 
 
+def tray_crop[dt: DType](src: Mat[dt], margin: Int) -> Mat[dt]:
+    """Crop to the inside of the tray rim found by tray_rim, shrunk by `margin` px on every side that has a rim;
+    sides without a rim keep the frame edge. Returns a copy when no rim is found."""
+    var g = Mat[DType.uint8](src.rows, src.cols, 1)
+    for i in range(src.rows * src.cols):
+        var a = 0.0
+        for c in range(src.ch):
+            a += Float64(src.data[i * src.ch + c])
+        g.data[i] = UInt8(Int(a / Float64(src.ch) + 0.5))
+    var e = tray_rim(g)
+    var x0 = Int(e.data[0]) + margin if e.data[0] >= 0 else 0
+    var x1 = Int(e.data[1]) - margin if e.data[1] >= 0 else src.cols - 1
+    var y0 = Int(e.data[2]) + margin if e.data[2] >= 0 else 0
+    var y1 = Int(e.data[3]) - margin if e.data[3] >= 0 else src.rows - 1
+    if x1 <= x0 or y1 <= y0:
+        return Mat[dt](copy=src)
+    var o = Mat[dt](y1 - y0 + 1, x1 - x0 + 1, src.ch, False)
+    var w = (x1 - x0 + 1) * src.ch
+    for y in range(y0, y1 + 1):
+        for k in range(w):
+            o.data[(y - y0) * w + k] = src.data[(y * src.cols + x0) * src.ch + k]
+    return o^
+
+
 def reconstruct(marker: Mat[DType.uint8], mask: Mat[DType.uint8]) -> Mat[DType.uint8]:
     """Grey reconstruction by dilation of marker under mask, 8-connected (Vincent 1993 hybrid: raster, anti-raster,
     then a FIFO). marker must be <= mask."""
@@ -401,9 +425,9 @@ def granulometry_rec(src: Mat[DType.uint8], radii: List[Int]) -> Mat[F64]:
 
 
 def run(mut a: Args) raises -> Bool:
-    if not (a.op in ["granulometry", "glcm", "lbpHist", "resizeMmpx", "granulometryMm", "tophat", "smoothFraction", "sharpMap", "autocorr", "waveletEnergy", "trayRim", "granulometryRec"]):
+    if not (a.op in ["granulometry", "glcm", "lbpHist", "resizeMmpx", "granulometryMm", "tophat", "smoothFraction", "sharpMap", "autocorr", "waveletEnergy", "trayRim", "granulometryRec", "trayCrop"]):
         return False
-    if a.op in ["granulometry", "resizeMmpx", "granulometryMm", "tophat"]:
+    if a.op in ["granulometry", "resizeMmpx", "granulometryMm", "tophat", "trayCrop"]:
         if peek_code(a.ins[0]) == 1:
             return _run_dt[DType.float32](a)
         return _run_dt[DType.uint8](a)
@@ -449,6 +473,11 @@ def _run_dt[dt: DType](mut a: Args) raises -> Bool:
     else:
         var o = Mat[dt](0, 0)
         while a.again():
-            o = tophat(m, a.i("ksize", 15)) if a.op == "tophat" else resize_mmpx(m, a.f("mmpx_in", 1.0), a.f("mmpx_out", 1.0))
+            if a.op == "tophat":
+                o = tophat(m, a.i("ksize", 15))
+            elif a.op == "trayCrop":
+                o = tray_crop(m, a.i("margin", 8))
+            else:
+                o = resize_mmpx(m, a.f("mmpx_in", 1.0), a.f("mmpx_out", 1.0))
         save(o, a.out)
     return True

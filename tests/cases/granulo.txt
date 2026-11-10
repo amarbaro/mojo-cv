@@ -26,3 +26,5 @@ grec_smg         granulometryRec smg radii=0,1,3,6 => max:0
 grec_bin         granulometryRec binhd radii=2,5 => max:0
 gmm_hdg_big      granulometryMm hdg ppm=40 => max:1e-9
 rim_syn          trayRim rimsyn => exact
+crop_rim_syn     trayCrop rimsyn margin=6 => exact
+crop_norim_hdg   trayCrop hdg => exact
