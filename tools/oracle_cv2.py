@@ -381,6 +381,41 @@ def compare(ours, ref, spec):
     raise ValueError("unknown cmp " + spec)
 
 
+# ---- granulo (cv2 for the openings; numpy for GLCM and LBP, scikit-image definitions) ----------------------
+@op()
+def granulometry(i, kv):
+    out = []
+    for r in [int(x) for x in kv.get("radii", "0,1,2,4").split(",")]:
+        if r <= 0:
+            out.append(float(i[0].astype(np.float64).sum()))
+        else:
+            se = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (2 * r + 1, 2 * r + 1))
+            out.append(float(cv2.morphologyEx(i[0], cv2.MORPH_OPEN, se).astype(np.float64).sum()))
+    return np.array([out], np.float64)
+@op()
+def glcm(i, kv):
+    L, dx, dy = kv_i(kv, "levels", 16), kv_i(kv, "dx", 1), kv_i(kv, "dy", 0)
+    q = (i[0].astype(np.int64) * L) // 256
+    h, w = q.shape
+    a = q[max(0, -dy):h - max(0, dy), max(0, -dx):w - max(0, dx)]
+    b = q[max(0, -dy) + dy:h - max(0, dy) + dy, max(0, -dx) + dx:w - max(0, dx) + dx]
+    m = np.zeros((L, L)); np.add.at(m, (a.ravel(), b.ravel()), 1); m = m + m.T; p = m / m.sum()
+    I, J = np.indices((L, L)); d = I - J
+    mu = (p * I).sum(); var = (p * (I - mu) ** 2).sum(); cov = (p * (I - mu) * (J - mu)).sum()
+    return np.array([[(p * d * d).sum(), (p * abs(d)).sum(), (p / (1 + d * d)).sum(), np.sqrt((p * p).sum()), cov / var if var > 0 else 1.0]])
+@op()
+def lbpHist(i, kv):
+    g = i[0].astype(np.int64); c = g[1:-1, 1:-1]; code = np.zeros_like(c)
+    for k, (dy, dx) in enumerate([(-1, -1), (-1, 0), (-1, 1), (0, 1), (1, 1), (1, 0), (1, -1), (0, -1)]):
+        code |= (g[1 + dy:g.shape[0] - 1 + dy, 1 + dx:g.shape[1] - 1 + dx] >= c).astype(np.int64) << k
+    return (np.bincount(code.ravel(), minlength=256) / code.size)[None, :].astype(np.float64)
+@op()
+def resizeMmpx(i, kv):
+    f = kv_f(kv, "mmpx_in", 1.0) / kv_f(kv, "mmpx_out", 1.0)
+    h, w = i[0].shape[:2]
+    return cv2.resize(i[0], (max(1, int(w * f + 0.5)), max(1, int(h * f + 0.5))), interpolation=cv2.INTER_AREA if f < 1 else cv2.INTER_LINEAR)
+
+
 # ---- fixtures ---------------------------------------------------------------------------------------------
 def scene(seed, h=1080, w=1920):
     """A deterministic 1080p test picture with the statistics the ops care about: flat panels with sharp edges, a
