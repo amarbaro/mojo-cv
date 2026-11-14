@@ -1,0 +1,4 @@
+name = "mojo-cv"
+version = "0.1.5"
+description = "Computer vision for Mojo: OpenCV-style 2D ops, calibration, 3D geometry and CAD export, each checked against cv2 5.0 or an exact oracle"
+tags = ["mojo", "vision", "image", "opencv"]

@@ -1,0 +1,27 @@
+# pixi-build-mojo package: lets mojoshelf and `pixi add --git` consume this library as a source dependency.
+[workspace]
+name = "mojo-cv"
+version = "0.1.5"
+preview = ["pixi-build"]
+channels = ["https://conda.modular.com/max", "https://prefix.dev/amarbaro/amarbaro", "conda-forge"]
+platforms = ["linux-64"]
+
+[package]
+name = "mojo-cv"
+version = "0.1.5"
+
+[package.build]
+backend = { name = "pixi-build-mojo", version = "0.*" }
+
+[package.build.config.pkg]
+path = "src/mojocv"
+name = "mojocv"
+
+[package.host-dependencies]
+max = "=26.7.0"
+
+[package.build-dependencies]
+max = "=26.7.0"
+
+[package.run-dependencies]
+max = "=26.7.0"
